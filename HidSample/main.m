@@ -24,37 +24,60 @@ typedef enum {
     UP,
     DOWN,
     NO_CHANGE,
+    MOVE,
 } ButtonState;
 
+
+
+
 static void simulateClick(int x, int y, ButtonState button) {
+#if TOUCH_REPORT
     printf("CLICK %d %d %d\n", x, y, button);
-    static int eventNumber = 0;
+#endif
+    
+    //static int eventNumber = 0;
+    static int previousButton=UP;
     if (button == DOWN) {
-        CGEventRef move = CGEventCreateMouseEvent(NULL,
+        CGEventRef mouse_press = CGEventCreateMouseEvent(NULL,
                 kCGEventLeftMouseDown,
                 CGPointMake(x, y),
                 kCGMouseButtonLeft);
-        CGEventSetIntegerValueField(move, kCGMouseEventNumber, eventNumber);
-        CGEventPost(kCGHIDEventTap, move);
-        CFRelease(move);
-        eventNumber++;
+        
+        //CGEventSetIntegerValueField(mouse_press, kCGMouseEventNumber, eventNumber);
+        CGEventPost(kCGHIDEventTap, mouse_press);
+        CFRelease(mouse_press);
+        //eventNumber++;
+        previousButton=DOWN;
     }
     else if (button == UP) {
-        CGEventRef move_up = CGEventCreateMouseEvent(NULL,
+        CGEventRef mouse_release = CGEventCreateMouseEvent(NULL,
                 kCGEventLeftMouseUp,
                 CGPointMake(x, y),
                 kCGMouseButtonLeft);
-        CGEventSetIntegerValueField(move_up, kCGMouseEventNumber, eventNumber);
-        CGEventPost(kCGHIDEventTap, move_up);
-        CFRelease(move_up);
+        //CGEventSetIntegerValueField(mouse_release, kCGMouseEventNumber, eventNumber);
+        CGEventPost(kCGHIDEventTap, mouse_release);
+        CFRelease(mouse_release);
         //eventNumber++;
+        
+        previousButton=UP;
     }
-    if (button == NO_CHANGE) {
+    if (button == NO_CHANGE && previousButton==DOWN) {
         CGEventRef move = CGEventCreateMouseEvent(NULL,
                 kCGEventLeftMouseDragged,
                 CGPointMake(x, y),
                 kCGMouseButtonLeft);
-        CGEventSetIntegerValueField(move, kCGMouseEventNumber, eventNumber);
+        //CGEventSetIntegerValueField(move, kCGMouseEventNumber, eventNumber);
+        CGEventPost(kCGHIDEventTap, move);
+        CFRelease(move);
+        //eventNumber++;
+    }
+    
+    if (button == MOVE) {
+        CGEventRef move = CGEventCreateMouseEvent(NULL,
+                                                  kCGEventMouseMoved,
+                                                  CGPointMake(x, y),
+                                                  kCGMouseButtonLeft);
+        //CGEventSetIntegerValueField(move, kCGMouseEventNumber, eventNumber);
         CGEventPost(kCGHIDEventTap, move);
         CFRelease(move);
         //eventNumber++;
@@ -62,7 +85,10 @@ static void simulateClick(int x, int y, ButtonState button) {
 }
 
 static void submitTouch(int fingerId, int x, int y, ButtonState button) {
-    printf("%s: <%d, %d> state=%d\n", __func__, x, y, button);
+#if TOUCH_REPORT
+    printf("\n\n%s: <%d, %d> state=%d\n", __func__, x, y, button);
+#endif
+    
     static int last_x[NUM_TOUCHES] = {
         0,
     };
@@ -70,12 +96,39 @@ static void submitTouch(int fingerId, int x, int y, ButtonState button) {
         0,
     };
     
+    
+    
+    static int lx[NUM_TOUCHES] = {
+        0,
+    };
+    static int ly[NUM_TOUCHES] = {
+        0,
+    };
+    if (x > 0) {
+        lx[fingerId] = x;
+    }
+    if (y > 0) {
+        ly[fingerId] = y;
+    }
+    
+    
     if (button == DOWN || button == UP) {
+        
+        if (button == UP)
+        {
+            simulateClick(lx[fingerId], ly[fingerId], button);
+
+            if (last_x[fingerId]>0 && last_y[fingerId]>0)
+                simulateClick(last_x[fingerId], last_y[fingerId], MOVE);
+        }
+        
         if (last_x[fingerId] >0 && last_y[fingerId] > 0) {
-            printf("last <%d %d>\n", last_x[fingerId], last_y[fingerId]);
+            ////printf("last <%d %d>\n\n", last_x[fingerId], last_y[fingerId]);
             simulateClick(last_x[fingerId], last_y[fingerId], button);
             last_x[fingerId] = last_y[fingerId] = -1;
         }
+        
+        
     }
     else {
         if (x > 0) {
@@ -84,10 +137,20 @@ static void submitTouch(int fingerId, int x, int y, ButtonState button) {
         if (y > 0) {
             last_y[fingerId] = y;
         }
+        
+            //simulateClick(last_x[fingerId], last_y[fingerId], MOVE);
+        
         if (last_x[fingerId] > 0 && last_y[fingerId] > 0) {
             simulateClick(last_x[fingerId], last_y[fingerId], NO_CHANGE);
+            
         }
+        
+        
     }
+    
+    
+    
+    
 }
 
 static bool acceptHidElement(HIDElement *element) {
@@ -123,16 +186,24 @@ static void reportHidElement(HIDElement *element) {
     
     [gLock lock];
     
-    printf("\n+++++++++++\n");
-    printHidElement("report element", element);
-    printf("------------\n");
+    //simulateClick(1504, 419, DOWN);
+    //simulateClick(1295, 386, NO_CHANGE);
+    //simulateClick(1295, 386, UP);
+
+    
+    
+    
+    //printf("\n+++++++++++\n");
+    //printHidElement("report element", element);
+    //printf("------------\n");
     
     static int fingerId = 0;
     static ButtonState button = NO_CHANGE;
     
     //button
     if (element->type == 2) {
-        button = element->currentValue ? DOWN : UP;
+        button = (element->currentValue) ? DOWN : UP;
+        
         submitTouch(fingerId, 0, 0, button);
     }
     else {
@@ -189,7 +260,11 @@ static void QueueCallbackFunction(
 int main (int argc, const char * argv[]) {
     gLock = [[NSLock alloc] init];
     InitHIDNotifications(TOUCH_VID, TOUCH_PID);
+    printf("To keep driver running keep this window in the background...");
     CFRunLoopRun();
+    
+    
+    
     
     return 0;
 }
@@ -319,8 +394,11 @@ static void HIDDeviceAdded(void *refCon, io_iterator_t iterator)
             pass = FindHIDElements(hidDataRef);
             pass = SetupQueue(hidDataRef);
             
-            printf("Please touch screen to continue.\n\n");
             
+
+            #if TOUCH_REPORT
+            printf("Please touch screen to continue.\n\n");
+            #endif
             
             /* Register an interest in finding out anything that happens with this device (disconnection, for example) */
             IOServiceAddInterestNotification(

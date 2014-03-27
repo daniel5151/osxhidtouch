@@ -132,7 +132,7 @@
 		113F64CE183E93B20041DE1B /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0500;
+				LastUpgradeCheck = 0510;
 				ORGANIZATIONNAME = "Alexander Tarasikov";
 			};
 			buildConfigurationList = 113F64D1183E93B20041DE1B /* Build configuration list for PBXProject "HidSample" */;
@@ -238,7 +238,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "HidSample/HidSample-Prefix.pch";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx10.8;
+				SDKROOT = macosx;
 			};
 			name = Debug;
 		};
@@ -249,7 +249,7 @@
 				GCC_PREFIX_HEADER = "HidSample/HidSample-Prefix.pch";
 				"INFOPLIST_FILE[sdk=macosx10.8]" = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx10.8;
+				SDKROOT = macosx;
 			};
 			name = Release;
 		};

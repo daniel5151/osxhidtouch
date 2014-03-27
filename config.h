@@ -9,7 +9,7 @@
 #ifndef HidSample_config_h
 #define HidSample_config_h
 
-#define TOUCH_REPORT 1
+#define TOUCH_REPORT 0
 
 #define NUM_TOUCHES 1
 
