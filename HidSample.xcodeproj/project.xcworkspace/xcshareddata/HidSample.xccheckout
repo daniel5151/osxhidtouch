@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>98E34D4E-8B88-4988-90D6-57E5EA221351</string>
+	<key>IDESourceControlProjectName</key>
+	<string>HidSample</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>364638B5-6B79-4FD4-9A30-EE0FB90434D9</key>
+		<string>https://github.com/astarasikov/osxhidtouch.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>HidSample.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>364638B5-6B79-4FD4-9A30-EE0FB90434D9</key>
+		<string>../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/astarasikov/osxhidtouch.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>364638B5-6B79-4FD4-9A30-EE0FB90434D9</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>364638B5-6B79-4FD4-9A30-EE0FB90434D9</string>
+			<key>IDESourceControlWCCName</key>
+			<string>osxhidtouch</string>
+		</dict>
+	</array>
+</dict>
+</plist>

@@ -144,17 +144,17 @@ static void reportHidElement(HIDElement *element) {
     }
     
     if (element->usagePage == 1 && element->currentValue < 0x10000) {
-        float scale_x = SCREEN_RESX / 32768.0f;
-        float scale_y = SCREEN_RESY / 32768.0f;
+        //float scale_x = SCREEN_RESX / 32768.0f;
+        //float scale_y = SCREEN_RESY / 32768.0f;
         
         short value = element->currentValue & 0xffff;
         
         if (element->usage == kHIDUsage_GD_X) {
-            int x = (int)(value * scale_x);
+            int x = (int)(value * CGDisplayPixelsWide(CGMainDisplayID())/3966.0);
             submitTouch(fingerId, x, 0, NO_CHANGE);
         }
         else if (element->usage == kHIDUsage_GD_Y) {
-            int y = (int)(value * scale_y);
+            int y = (int)(value * CGDisplayPixelsHigh(CGMainDisplayID())/2239.0);
             submitTouch(fingerId, 0, y, NO_CHANGE);
         }
     }
