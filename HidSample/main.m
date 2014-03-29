@@ -131,63 +131,51 @@ static void submitTouch(int fingerId, int x, int y, ButtonState button) {
         0,
     };
     
-    static int timer = 0;
-
+    static int holdTime = 0;
     
     if (button==RIGHT)
     {
-        timer=x;
-        //printf("timer: %d\n", timer);
+        holdTime=x;
+        //printf("timer: %d\n", holdTime);
+        
+    }
+    else if (button == DOWN || button == UP)
+    {
+        /*if (button==DOWN)
+            printf("DOWN\n");
+        else if (button==UP)
+            printf("UP\n");*/
+        
+        if (last_x[fingerId] >0 && last_y[fingerId] > 0)
+        {
+            if (button == UP && holdTime>7500){
+                holdTime=0;
+                simulateClick(last_x[fingerId], last_y[fingerId], RIGHT);
+            }
+            
+            //printf("last <%d %d>\n\n", last_x[fingerId], last_y[fingerId]);
+            simulateClick(last_x[fingerId], last_y[fingerId], button);
+            
+            if (button==UP){
+                simulateClick(last_x[fingerId], last_y[fingerId], MOVE);
+            }
+                //last_x[fingerId] = last_y[fingerId] = -1;
+        }
+        
     }
     else {
-        
-        
-        
-        if (button == DOWN || button == UP) {
-            /*if (button==DOWN)
-                printf("DOWN\n");
-            else if (button==UP)
-                printf("UP\n");*/
-            
-            if (last_x[fingerId] >0 && last_y[fingerId] > 0) {
-                
-
-                if (button == UP && timer>7500)
-                {
-                        button=RIGHT;
-                }
-                
-                //printf("last <%d %d>\n\n", last_x[fingerId], last_y[fingerId]);
-                simulateClick(last_x[fingerId], last_y[fingerId], button);
-                
-                if (button==UP){
-                    simulateClick(last_x[fingerId], last_y[fingerId], MOVE);
-                }
-                    //last_x[fingerId] = last_y[fingerId] = -1;
-            }
-            
-            
+        if (x > 0) {
+            last_x[fingerId] = x;
         }
-        else {
-            if (x > 0) {
-                last_x[fingerId] = x;
-            }
-            if (y > 0) {
-                last_y[fingerId] = y;
-            }
-            
-            
-            if (last_x[fingerId] > 0 && last_y[fingerId] > 0) {
-                simulateClick(last_x[fingerId], last_y[fingerId], NO_CHANGE);
-                
-            }
-            
+        if (y > 0) {
+            last_y[fingerId] = y;
+        }
+        
+        if (last_x[fingerId] > 0 && last_y[fingerId] > 0) {
+            simulateClick(last_x[fingerId], last_y[fingerId], NO_CHANGE);
             
         }
     }
-    
-    
-    
 }
 
 static bool acceptHidElement(HIDElement *element) {
@@ -252,7 +240,8 @@ static void reportHidElement(HIDElement *element) {
     }
     
     if (element->usagePage == 0xd && element->usage == 0x22) {
-        //fingerId = element->currentValue;
+        fingerId = element->currentValue;
+        //printf("value: %d\n", element->currentValue);
     }
     
     if (element->usagePage == 1 && element->currentValue < 0x10000) {
@@ -271,107 +260,53 @@ static void reportHidElement(HIDElement *element) {
         }
     }
     
+    //printf("ElementType: %x, CurrentValue: %d, usagePage: %x, usage: %x\n", element->type, element->currentValue, element->usagePage, element->usage);
+
+    
     
     // element usage guide:
-    // Timer: 86
+    // Scantime: 86
     // Y position: 49 (two events are called, both represent coordinates, but first event has smaller number and is interpreted only
     // X position: 48 (note above, 2 events also)
     // Y axis fatness: 73
     // Y axis fatness: 72
     // Boolean for finger on/off: 66 (on is 1, off is 0, on is not always called first, so not reliable, also is the only one that has ElementType 2)
-    // Int for fingers on: 84 and 81 (81 is duplicate, don't use)
+    // Touchcount: 84 , 81 (81 is duplicate, don't use)
     
     
     
     
     
-    // The first sign that shows a finger pressed when no previous fingers have been pressed is the start of the timer with element usage 86
-    // after the first finger is pressed, the first sign of more pressed fingers is an event by element usage 84 that shows the number of current fingers
+    // The first sign that shows a finger pressed when no previous fingers have been pressed is the start of the timer with element usage 86, boolean 66 comes later with value 1
+    // after the first finger is pressed, the first sign of more pressed fingers is an event by element usage 84 that shows the number of current fingers, also 81 is 4x the number of fingers, comes later, also boolean 66 comes later
     
-    // when fingers are removed when there are 2 or more fingers, element usage 66 is set to 0
+    // when fingers are removed when there are 2 or more fingers, element with usage 73, 72, and 66 get cleared in that order to 0, 84 updates with new number of fingers, 81 becomes 0 too later
     //when there is one finger left, the event occur as follows: element with usage 73, 72, and 66 get cleared in that order to 0
-    
     
     
     
     // own attempt at counting fingers for potential multitouch
     
+    
     /*static short fingerCount=0;
-    static bool block =false;
     
-    if (element->usage==86 && element->currentValue==0)
+    if (element->usage==86 && fingerCount<1) //timer on
     {
-        fingerCount=1;
         
-        printf("\n\nFinger ON, %d\n", fingerCount);
+        fingerCount=1; //show at least one finger
     }
-    else if (fingerCount>0 && element->usage==84 && element->currentValue != fingerCount)
+    
+    
+    if (element->usage==84) //correction factor
     {
-        //if (block==true)
-            //block=false;
-        //else
-        //{
-            fingerCount=element->currentValue;
-            printf("\n\nFinger ON, %d\n", fingerCount);
-        //}
+        fingerCount=element->currentValue;
     }
-    else if (element->usage==81 && element->currentValue != fingerCount)
+    if (element->usage==81 && element->currentValue!=0) //correction factor
     {
-        fingerCount=element->currentValue / 4;
-        printf("\n\nLate Finger ON, %d\n", fingerCount);
-    }
+        fingerCount=(element->currentValue)/4;
+    }*/
     
-    
-    
-    else if (element->type==2 && element->usage==66 && element->currentValue==0)
-    {
-        //block=true;
-        
-        fingerCount= fingerCount<=1? 0: fingerCount-1;
-        
-        printf("\n\nFinger OFF, %d\n", fingerCount);
-    }
-    
-    else if (element->usage==49)
-    {
-        callTouch(0, element->currentValue, NO_CHANGE);
-    }
-    
-    else if (element->usage==4y)
-    {
-        callTouch(element->currentValue, 0, NO_CHANGE);
-    }
-    */
-    
-    
-    
-    
-    /*if (element->type==1 && element-> usage==48 && element->currentValue<131074)
-        printf("X: %d\n", element->currentValue);
-    
-    if (element->type==1 && element-> usage==49 && element->currentValue<65537)
-        printf("Y: %d\n", element->currentValue);*/
-    
-    
-    //if (element->usage==84)
-        //printf("FingerCount: %d\n", element->currentValue);
-        //assert(element->currentValue==fingerCount);
-
-    
-    //if (element->usage==86)
-        //printf("Time: %d\n", element->currentValue);
-
-    
-    
-    //if (element->usage!=48 &&element->usage!=49 &&element->usage!=86 &&element->usage!=72 &&element->usage!=73)
-    //if (element->usage==84 || element->usage==81)
-        //printf("%d\n", element->currentValue);
-    //if (element->usage==81)
-        //printf("\n");
-    //if (element->usage!=86 && element->usage!=73 && element->usage!=72)
-    //printf("ElementType: %d, CurrentValue: %d, usagePage: %d, usage: %d\n", element->type, element->currentValue, element->usagePage, element->usage);
-    //if (element->type==2)
-        //printf("\n");
+    //printf("Number of Fingers: %d\n", fingerCount);
     
     
     [gLock unlock];
