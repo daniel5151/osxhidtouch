@@ -126,56 +126,63 @@ static void submitTouch(int fingerId, int x, int y, ButtonState button) {
     static int last_y[NUM_TOUCHES] = {
         0,
     };
-    static short pressed[NUM_TOUCHES] = {
+    static bool pressed[NUM_TOUCHES] = {
         0,
     };
     
-    static int holdTime = 0;
+    static int holdStartCoord[2] = {
+        0, 0
+    };
     
-    if (button==RIGHT)
-    {
+    static bool holdNotMoveFar = 0;
+    
+    static short holdTime = 0;
+    
+    if (button==RIGHT){
         holdTime=x;
-        //printf("timer: %d\n", holdTime);
-        
     }
     else if (button == DOWN || button == UP)
     {
-        /*if (button==DOWN)
+        /*
+        if (button==DOWN)
             printf("DOWN\n");
         else if (button==UP)
-            printf("UP\n");*/
+            printf("UP\n");
+        */
         if (button == DOWN) //fix for multitouch dragging on start
         {
             pressed[fingerId]=1;
+            
+            // coordinate has to be assigned by now, so safe
+            holdStartCoord[0]=last_x[fingerId];
+            holdStartCoord[1]=last_y[fingerId];
+            holdNotMoveFar=true;
         }
-        else if (button == UP)
-        {
+        else if (button == UP){
             pressed[fingerId]=0;
         }
         
         if (last_x[fingerId] >0 && last_y[fingerId] > 0)
         {
-            
-            if (button == UP && holdTime>7500){
+            //printf("last <%d %d>\n\n", last_x[fingerId], last_y[fingerId]);
+
+            if (button == UP && holdTime>7500 && holdNotMoveFar){
                 holdTime=0;
                 simulateClick(last_x[fingerId], last_y[fingerId], RIGHT);
             }
-            
-            //printf("last <%d %d>\n\n", last_x[fingerId], last_y[fingerId]);
             simulateClick(last_x[fingerId], last_y[fingerId], button);
-            
             if (button==UP){
-                simulateClick(last_x[fingerId], last_y[fingerId], MOVE);
-                last_x[fingerId] = last_y[fingerId] = -1;
+                last_x[fingerId] = last_y[fingerId] = 0;
+                holdNotMoveFar=false;
+                holdStartCoord[0]=0;
+                holdStartCoord[1]=0;
             }
-            
         }
     }
     else {
         /*if (last_x[fingerId] > 0 && last_y[fingerId] > 0 && pressed[fingerId]==1 && button == NO_CHANGE)
         {
             simulateClick(last_x[fingerId], last_y[fingerId], MOVE);
-
         }*/
         
         if (x > 0) {
@@ -185,8 +192,12 @@ static void submitTouch(int fingerId, int x, int y, ButtonState button) {
             last_y[fingerId] = y;
         }
         
-        if (last_x[fingerId] > 0 && last_y[fingerId] > 0 && pressed[fingerId==1]) {
+        if (last_x[fingerId] > 0 && last_y[fingerId] > 0 && pressed[fingerId]) {
             simulateClick(last_x[fingerId], last_y[fingerId], NO_CHANGE);
+        }
+        
+        if (abs(last_x[fingerId] - holdStartCoord[0]) > 10 || abs(last_y[fingerId] - holdStartCoord[1]) > 10){ // hold finger action within 10 pixels
+            holdNotMoveFar=false;
         }
 
         //printf("finger %d, last <%d %d>\n\n", fingerId, last_x[fingerId], last_y[fingerId]);
@@ -225,12 +236,6 @@ static void reportHidElement(HIDElement *element) {
     }
     
     [gLock lock];
-    
-    //simulateClick(1504, 419, DOWN);
-    //simulateClick(1295, 386, NO_CHANGE);
-    //simulateClick(1295, 386, UP);
-
-
 
     
     //printf("\n+++++++++++\n");
@@ -265,35 +270,39 @@ static void reportHidElement(HIDElement *element) {
     }
     
     if (element->usagePage == 1 && element->currentValue < 0x10000) {
-        //float scale_x = SCREEN_RESX / 32768.0f;
-        //float scale_y = SCREEN_RESY / 32768.0f;
         
         short value = element->currentValue & 0xffff;
         
-        short finger;
+        short finger = 0;
         
         if (element->usage==0x30) //X
             finger = (element->cookie-21)/9; //int division truncates
         else if (element->usage==0x31) //Y
             finger = (element->cookie-24)/9; //int division truncates
-        else
-            finger=0;
-        
         
         fingerId = finger;
         
         //printf("FINGER: %d\n", fingerId);
 
-        //cookies are 29, 38, 47, 56, 65, 74, 83, 92, 101, 110 n fingers and 37, 46, 55, 64, 73, etc for removal to n-1 fingers for Y axis
-        //cookies are 32, 41, 50, etcetc, as above^ for x axis
+        //element->cookies from a 0x30 or 0x31 change based on finger
+        // Y axis example:
+        // 29, 38, 47, 56, 65, 74, 83, 92, 101, 110 for 1st to 10th fingers,
+        // 37, 46, 55, 64, 73, etc for removal of the nth f ingers for Y axis
+        // X axis is similar: values 32, 41, 50 for 1st to 10th, 31, 41, 49, etc, as above^
+        
+        //CGDisplayPixelsWide(CGMainDisplayID())
+        //CGDisplayPixelsHigh(CGMainDisplayID())
+        
+        float scale_x = SCREEN_RESX / 3966.0;
+        float scale_y = SCREEN_RESY / 2239.0;
         
         
         if (element->usage == kHIDUsage_GD_X) {
-            int x = (int)(value * CGDisplayPixelsWide(CGMainDisplayID())/3966.0);
+            int x = (int)(value * scale_x);
             submitTouch(fingerId, x, 0, NO_CHANGE);
         }
         else if (element->usage == kHIDUsage_GD_Y) {
-            int y = (int)(value * CGDisplayPixelsHigh(CGMainDisplayID())/2239.0);
+            int y = (int)(value * scale_y);
             submitTouch(fingerId, 0, y, NO_CHANGE);
         }
     }
@@ -313,25 +322,14 @@ static void reportHidElement(HIDElement *element) {
     
     
     
+    //Order for mouse events:
     
+    // The first sign that shows a finger pressed when no previous fingers have been pressed is the start of the timer with element usage 0x56, boolean 0x42 comes later with value 1
+    // after the first finger is pressed, the first sign of more pressed fingers is an event by element usage 0x54 that shows the number of current fingers, also 0x51 is usually 4x the number of fingers, comes later, also boolean 0x42 comes later
     
-    // The first sign that shows a finger pressed when no previous fingers have been pressed is the start of the timer with element usage 86, boolean 66 comes later with value 1
-    // after the first finger is pressed, the first sign of more pressed fingers is an event by element usage 84 that shows the number of current fingers, also 81 is 4x the number of fingers, comes later, also boolean 66 comes later
+    // when fingers are removed when there are 2 or more fingers, element with usage 0x49, 0x48, and 0x42 get cleared in that order to 0, 0x54 updates with new number of fingers, 0x51 becomes 0 too later
+    //when there is one finger left, the event occur as follows: element with usage 0x49, 0x48, and 0x42 get cleared in that order to 0
     
-    // when fingers are removed when there are 2 or more fingers, element with usage 73, 72, and 66 get cleared in that order to 0, 84 updates with new number of fingers, 81 becomes 0 too later
-    //when there is one finger left, the event occur as follows: element with usage 73, 72, and 66 get cleared in that order to 0
-    
-    
-    /*if (element->type == 2 && element->currentValue==1){
-    simulateClick(1500, 700, DOWN);
-        //simulateClick(1500, 720, DOWN);
-        simulateClick(1500, 800, UP);
-
-
-        simulateClick(1500, 750, NO_CHANGE);
-
-        simulateClick(1500, 750, UP);
-    }*/
     [gLock unlock];
 }
 
