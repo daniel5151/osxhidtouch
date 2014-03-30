@@ -11,7 +11,7 @@
 
 #define TOUCH_REPORT 0
 
-#define NUM_TOUCHES 1
+#define NUM_TOUCHES 10
 
 #define TOUCH_VID 0x4f3
 #define TOUCH_PID 0x86

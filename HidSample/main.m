@@ -38,7 +38,6 @@ static void simulateClick(int x, int y, ButtonState button) {
 #endif
     
     //static int eventNumber = 0;
-    static int previousButton=UP;
     if (button == DOWN) {
         CGEventRef mouse_press = CGEventCreateMouseEvent(NULL,
                 kCGEventLeftMouseDown,
@@ -49,7 +48,6 @@ static void simulateClick(int x, int y, ButtonState button) {
         CGEventPost(kCGHIDEventTap, mouse_press);
         CFRelease(mouse_press);
         //eventNumber++;
-        previousButton=DOWN;
     }
     else if (button == UP) {
         CGEventRef mouse_release = CGEventCreateMouseEvent(NULL,
@@ -60,8 +58,6 @@ static void simulateClick(int x, int y, ButtonState button) {
         CGEventPost(kCGHIDEventTap, mouse_release);
         CFRelease(mouse_release);
         //eventNumber++;
-        
-        previousButton=UP;
     }
     else if (button == RIGHT) {
         CGEventRef mouse_right = CGEventCreateMouseEvent(NULL,
@@ -96,7 +92,7 @@ static void simulateClick(int x, int y, ButtonState button) {
         CFRelease(mouse_double);
     }
     
-    if (button == NO_CHANGE && previousButton==DOWN) {
+    if (button == NO_CHANGE) {
         CGEventRef move = CGEventCreateMouseEvent(NULL,
                 kCGEventLeftMouseDragged,
                 CGPointMake(x, y),
@@ -130,6 +126,9 @@ static void submitTouch(int fingerId, int x, int y, ButtonState button) {
     static int last_y[NUM_TOUCHES] = {
         0,
     };
+    static short pressed[NUM_TOUCHES] = {
+        0,
+    };
     
     static int holdTime = 0;
     
@@ -145,9 +144,18 @@ static void submitTouch(int fingerId, int x, int y, ButtonState button) {
             printf("DOWN\n");
         else if (button==UP)
             printf("UP\n");*/
+        if (button == DOWN) //fix for multitouch dragging on start
+        {
+            pressed[fingerId]=1;
+        }
+        else if (button == UP)
+        {
+            pressed[fingerId]=0;
+        }
         
         if (last_x[fingerId] >0 && last_y[fingerId] > 0)
         {
+            
             if (button == UP && holdTime>7500){
                 holdTime=0;
                 simulateClick(last_x[fingerId], last_y[fingerId], RIGHT);
@@ -158,12 +166,18 @@ static void submitTouch(int fingerId, int x, int y, ButtonState button) {
             
             if (button==UP){
                 simulateClick(last_x[fingerId], last_y[fingerId], MOVE);
+                last_x[fingerId] = last_y[fingerId] = -1;
             }
-                //last_x[fingerId] = last_y[fingerId] = -1;
+            
         }
-        
     }
     else {
+        /*if (last_x[fingerId] > 0 && last_y[fingerId] > 0 && pressed[fingerId]==1 && button == NO_CHANGE)
+        {
+            simulateClick(last_x[fingerId], last_y[fingerId], MOVE);
+
+        }*/
+        
         if (x > 0) {
             last_x[fingerId] = x;
         }
@@ -171,10 +185,11 @@ static void submitTouch(int fingerId, int x, int y, ButtonState button) {
             last_y[fingerId] = y;
         }
         
-        if (last_x[fingerId] > 0 && last_y[fingerId] > 0) {
+        if (last_x[fingerId] > 0 && last_y[fingerId] > 0 && pressed[fingerId==1]) {
             simulateClick(last_x[fingerId], last_y[fingerId], NO_CHANGE);
-            
         }
+
+        //printf("finger %d, last <%d %d>\n\n", fingerId, last_x[fingerId], last_y[fingerId]);
     }
 }
 
@@ -215,8 +230,8 @@ static void reportHidElement(HIDElement *element) {
     //simulateClick(1295, 386, NO_CHANGE);
     //simulateClick(1295, 386, UP);
 
-    
-    
+
+
     
     //printf("\n+++++++++++\n");
     //printHidElement("report element", element);
@@ -226,21 +241,26 @@ static void reportHidElement(HIDElement *element) {
     static ButtonState button = NO_CHANGE;
     
     //doubleclicktimer
-    if (element->usage == 86)
+    if (element->usage == 0x56)
         submitTouch(fingerId, element->currentValue, 0, RIGHT);
     
     //button
     if (element->type == 2) {
         button = (element->currentValue) ? DOWN : UP;
+        //finger by cookie value, 15 is 0, 16 is 1, etc
+        fingerId=element->cookie-15;
         
         submitTouch(fingerId, 0, 0, button);
+        
+        //printf("FINGER: %d\n", fingerId);
+
     }
     else {
         button = NO_CHANGE;
     }
     
     if (element->usagePage == 0xd && element->usage == 0x22) {
-        fingerId = element->currentValue;
+        //fingerId = element->currentValue;
         //printf("value: %d\n", element->currentValue);
     }
     
@@ -249,6 +269,24 @@ static void reportHidElement(HIDElement *element) {
         //float scale_y = SCREEN_RESY / 32768.0f;
         
         short value = element->currentValue & 0xffff;
+        
+        short finger;
+        
+        if (element->usage==0x30) //X
+            finger = (element->cookie-21)/9; //int division truncates
+        else if (element->usage==0x31) //Y
+            finger = (element->cookie-24)/9; //int division truncates
+        else
+            finger=0;
+        
+        
+        fingerId = finger;
+        
+        //printf("FINGER: %d\n", fingerId);
+
+        //cookies are 29, 38, 47, 56, 65, 74, 83, 92, 101, 110 n fingers and 37, 46, 55, 64, 73, etc for removal to n-1 fingers for Y axis
+        //cookies are 32, 41, 50, etcetc, as above^ for x axis
+        
         
         if (element->usage == kHIDUsage_GD_X) {
             int x = (int)(value * CGDisplayPixelsWide(CGMainDisplayID())/3966.0);
@@ -260,18 +298,18 @@ static void reportHidElement(HIDElement *element) {
         }
     }
     
-    //printf("ElementType: %x, CurrentValue: %d, usagePage: %x, usage: %x\n", element->type, element->currentValue, element->usagePage, element->usage);
+    //if (element->currentValue < 0x4000 && (element->usage ==0x42 ||element->usage ==0x30 || element->usage ==0x31))
+        //printf("Type: %x, Value: %d, usagePage: 0x%x, usage: 0x%x, cookie: %d\n", element->type, element->currentValue, element->usagePage, element->usage, element->cookie);
 
     
-    
     // element usage guide:
-    // Scantime: 86
-    // Y position: 49 (two events are called, both represent coordinates, but first event has smaller number and is interpreted only
-    // X position: 48 (note above, 2 events also)
-    // Y axis fatness: 73
-    // Y axis fatness: 72
-    // Boolean for finger on/off: 66 (on is 1, off is 0, on is not always called first, so not reliable, also is the only one that has ElementType 2)
-    // Touchcount: 84 , 81 (81 is duplicate, don't use)
+    // Scantime: 0x56
+    // Y position: 0x31 (two events are called, both represent coordinates, but first event has smaller number and is interpreted only
+    // X position: 0x30 (note above, 2 events also)
+    // Y axis fatness: 0x49
+    // Y axis fatness: 0x48
+    // Boolean for finger on/off: 0x42 (on is 1, off is 0, on is not always called first, so not reliable, also is the only one that has ElementType 2)
+    // Touchcount: 0x54 , 0x51 (0x51 is duplicate, don't use)
     
     
     
@@ -284,31 +322,16 @@ static void reportHidElement(HIDElement *element) {
     //when there is one finger left, the event occur as follows: element with usage 73, 72, and 66 get cleared in that order to 0
     
     
-    
-    // own attempt at counting fingers for potential multitouch
-    
-    
-    /*static short fingerCount=0;
-    
-    if (element->usage==86 && fingerCount<1) //timer on
-    {
-        
-        fingerCount=1; //show at least one finger
-    }
-    
-    
-    if (element->usage==84) //correction factor
-    {
-        fingerCount=element->currentValue;
-    }
-    if (element->usage==81 && element->currentValue!=0) //correction factor
-    {
-        fingerCount=(element->currentValue)/4;
+    /*if (element->type == 2 && element->currentValue==1){
+    simulateClick(1500, 700, DOWN);
+        //simulateClick(1500, 720, DOWN);
+        simulateClick(1500, 800, UP);
+
+
+        simulateClick(1500, 750, NO_CHANGE);
+
+        simulateClick(1500, 750, UP);
     }*/
-    
-    //printf("Number of Fingers: %d\n", fingerCount);
-    
-    
     [gLock unlock];
 }
 
@@ -340,8 +363,7 @@ int main (int argc, const char * argv[]) {
     gLock = [[NSLock alloc] init];
     InitHIDNotifications(TOUCH_VID, TOUCH_PID);
     printf("To keep driver running keep this window in the background...\n\n");
-    
-    
+
     
     CFRunLoopRun();
     
