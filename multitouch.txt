@@ -1,0 +1,55 @@
+Multi-fingers events can be imagined to work like this:
+let's define a sequence of touch events as starting from the moment the first finger is placed on an
+otherwise finger-less touchscreen to when the last finger is lifted, leaving 0 fingers on the screen.
+What happens is that OSX assigns cookie values to all the individual finger events, which differ by 9
+for each finger: i.e. cookie values of 29, 38, 47, 56, 65, 74, 83, 92, 101, 110 for 1st to 10th fingers
+with the Y-axis-event, and 32, 41, etc etc for the X-axis. (removal events cookies are 28, 37, etc etc and 31, 40, etc etc
+for the Y and X axes)
+
+I used a modulus to bring fingerId values from cookie values in another method, and this seemingly matches to the regular
+fingerindex from other commands, except for when the fingers are taken off not in the order that they are placed on. When
+this happens, the indexes get really messy.
+
+This is visualized as having, let say an integer value for the MOST allocated fingers in a series of touch events,
+in my case this is the allocatedFingers variable. This number, thankfully, doesn't change until all fingers are taken off.
+
+Back to how the array indexes change. Lets say the fingers are placed in the order A, B, C, D, E, and so are mapped to
+indexes 0, 1, 2, 3, 4. When E is takne off, everything functions as usual, 0 to A, 1 to B, etcetc. But when fingers
+A, B, C or D are taken off, the indexes are shifted one unit smaller, and count as if the finger isn't there.
+
+So lets say B is taken off. The new order is :
+A, (-empty-), C, D, E, for indexes
+0, (-empty-), 1, 2, 3.
+See how theres a shift. If we take off C as well, it is
+A, (-empty-, -empty-), D, E, for indexes
+0, (-empty-, -empty-), 1, 2
+If we then place them back on, they reclaim their former indexes, and indexes increase for D and E.
+Let's place B on first.
+A, B, (-empty-), D, E maps to
+0, 1, (-empty-), 2, 3.
+Putting C on restores the original indexes. This resembles having n finger memory spots allocated,
+and filling them from left to right
+
+
+So, this introduces problems in future situations with multitouch, where quite possibly, fingers might jump around if
+they've been lifted. I've used the recalculateIndex method to recalculate and return proper indexes
+
+
+
+
+
+    Order for mouse events:
+    
+The first sign that shows a finger pressed when no previous fingers have been pressed is the 
+start of the timer with element usage 0x56, boolean 0x42 comes later with value 1
+
+After the first finger is pressed, the first sign of more pressed fingers is an 
+event by element usage 0x54 that shows the number of current fingers, also 0x51 is 
+usually 4x the number of fingers, comes later, also boolean 0x42 comes later 
+   
+When fingers are removed when there are 2 or more fingers, element with usage 0x49, 
+0x48, and 0x42 get cleared in that order to 0, 0x54 updates with new number of 
+fingers, 0x51 becomes 0 too later
+
+When there is one finger left, the event occur as follows: 
+element with usage 0x49, 0x48, and 0x42 get cleared in that order to 0

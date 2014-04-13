@@ -116,6 +116,30 @@ static void simulateClick(int x, int y, ButtonState button) {
     }
 }
 
+// Bit of heuristics to maintain position of fingers in last_x and last_y array if
+// there are multiple fingers, and the last finger on is not the last finger taken off,
+// which usually disrupts the index used for the last_x and last_y array
+// This code recalculates the original indexes, stores them in an array
+
+static void recalculateIndex(bool pressed[], short indexFixer[], short allocatedFingers){
+    
+    short temp=0;
+    for (int i = 0; i< allocatedFingers; i++){
+        if (pressed[temp]==0){
+            temp++;
+            while(pressed[temp]==0 && temp<allocatedFingers)
+                temp++;
+        }
+        if (temp<allocatedFingers)
+            indexFixer[i]=temp;
+        else{
+            indexFixer[i]=-1;
+        }
+        temp++;
+    }
+}
+
+
 static void submitTouch(int fingerId, whatInput type, int input, ButtonState button) {
 #if TOUCH_REPORT
     printf("\n\n%s: <%d, %d> state=%d\n", __func__, x, y, button);
@@ -133,168 +157,86 @@ static void submitTouch(int fingerId, whatInput type, int input, ButtonState but
         0, 0
     };
     static short indexFixer[NUM_TOUCHES] = {
-        0,
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9
     };
     static bool holdNotMoveFar = 0;
     static short holdTime = 0;
     static short allocatedFingers = 1;
     static short fingerCount = 1;
-    static bool missingFingersChecked = 0;
+    static bool nothingOn = 1;
     
     if (button !=DOWN){
         fingerId=indexFixer[fingerId];
     }
     
     if (type==TIPSWITCH){
-        if (input==0)
-        {
-            allocatedFingers=1;
-            missingFingersChecked = 0;
-            for (int i = 0; i< NUM_TOUCHES; i++)
-                indexFixer[i]=0;
-            fingerCount=1;
+        if (input==0){ //initialize
+            allocatedFingers = 1;
+            fingerCount = 1;
         }
+        nothingOn=0;
         holdTime=input;
     }
     else if (type==CONTACTID){
         allocatedFingers=input;
     }
     else if (type==FINGERCOUNT){
-        if (input>fingerCount /*&& fingerCount<allocatedFingers*/){
-            
-            
-            // Multi-fingers events can be imagined to work like this:
-            // let's define a sequence of touch events as starting from the moment the first finger is placed on an
-            // otherwise finger-less touchscreen to when the last finger is lifted, leaving 0 fingers on the screen.
-            // What happens is that OSX assigns cookie values to all the individual finger events, which differ by 9
-            // for each finger: i.e. cookie values of 29, 38, 47, 56, 65, 74, 83, 92, 101, 110 for 1st to 10th fingers
-            // with the Y-axis-event, and 32, 41, etc etc for the X-axis. (removal events cookies are 28, 37, etc etc and 31, 40, etc etc
-            // for the Y and X axes)
-            
-            // I used a modulus to bring fingerId values from cookie values in another method, and this seemingly matches to the regular
-            // fingerindex from other commands, except for when the fingers are taken off not in the order that they are placed on. When
-            // this happens, the indexes get really messy.
-            
-            // This is visualized as having, let say an integer value for the MOST allocated fingers in a series of touch events,
-            // in my case this is the allocatedFingers variable. This number, thankfully, doesn't change until all fingers are taken off.
-            
-            // Back to how the array indexes change. Lets say the fingers are placed in the order A, B, C, D, E, and so are mapped to
-            // indexes 0, 1, 2, 3, 4. When E is takne off, everything functions as usual, 0 to A, 1 to B, etcetc. But when fingers
-            // A, B, C or D are taken off, the indexes are shifted one unit smaller, and count as if the finger isn't there.
-            
-            // So lets say B is taken off. The new order is :
-            // A, (-empty-), C, D, E, for indexes
-            // 0, (-empty-), 1, 2, 3.
-            // See how theres a shift. If we take off C as well, it is
-            // A, (-empty-, -empty-), D, E, for indexes
-            // 0, (-empty-, -empty-), 1, 2
-            // If we then place them back on, they reclaim their former indexes, and indexes increase for D and E.
-            // Let's place B on first.
-            // A, B, (-empty-), D, E maps to
-            // 0, 1, (-empty-), 2, 3.
-            // Putting C on restores the original indexes. This resembles having n finger memory spots allocated,
-            // and filling them from left to right
-            
-            
-            // So, this introduces problems in future situations with multitouch, where quite possibly, fingers might jump around if
-            // they've been lifted. I've used the indexFixer method to fix the indexes
-            
-            // The following small loop addresses an issue when if the above weird things happen, a Tipswitch true event isn't generated
+        if (nothingOn){ //sometimes, fingercount is called before timer is, so adjust values
+            fingerCount=input;
+            allocatedFingers=input;
+            nothingOn = 0;
+        }
+        if (input>allocatedFingers)
+            allocatedFingers = input;
+        
+        if (input>fingerCount && !nothingOn){
+            // The following small loop addresses an issue when a Tipswitch true event isn't generated
             // when fingers are placed. It compares allocated fingers to detected fingers on screen
             for (int i=0; i< allocatedFingers; i++){
                 if (pressed[i]==0){
                     pressed[i]=1;
-                    i=allocatedFingers;
+                    i=allocatedFingers; //break
                 }
             }
-            
-            // Bit of heuristics to maintain position of fingers in last_x and last_y array if
-            // there are multiple fingers, and the last finger on is not the last finger taken off,
-            // which usually disrupts the index used for the last_x and last_y array
-            // This code recalculates the original indexes, stores them in an array
-            
-            int temp=0;
-            for (int i = 0; i< allocatedFingers; i++){
-                if (pressed[temp]==0){
-                    temp++;
-                    while(pressed[temp]==0 && temp<allocatedFingers)
-                        temp++;
-                }
-                if (temp<allocatedFingers){
-                    indexFixer[i]=temp;
-                }
-                else{
-                    indexFixer[i]=-1;
-                }
-                temp++;
-            }
+            //needs recalculation
+            recalculateIndex(pressed, indexFixer, allocatedFingers);
         }
         fingerCount=input;
     }
     else if (type == PRESS)
     {
-        
-        if (button == DOWN) //fix for multitouch dragging on start
-        {
+        if (button == DOWN){ // dragging: coordinate has to be assigned by now, so safe
             pressed[fingerId]=1;
-            indexFixer[fingerId] = fingerId;
             
-            // coordinate has to be assigned by now, so safe
             holdStartCoord[0]=last_x[fingerId];
             holdStartCoord[1]=last_y[fingerId];
             holdNotMoveFar=true;
         }
+        
         if (last_x[fingerId] >0 && last_y[fingerId] > 0)
-        {
-            if (button == UP && holdTime>7500 && holdNotMoveFar){
-                simulateClick(last_x[fingerId], last_y[fingerId], RIGHT);
-            }
             simulateClick(last_x[fingerId], last_y[fingerId], button);
-            if (button==UP){
-                last_x[fingerId] = last_y[fingerId] = 0;
-                holdNotMoveFar=false;
-                holdStartCoord[0]=0;
-                holdStartCoord[1]=0;
-            }
-        }
-        if (button == UP){
+        
+        if (button == UP){ //cleanup
+            if (last_x[fingerId] > 0 && last_y[fingerId] > 0 && holdTime>7500 && holdNotMoveFar)
+                simulateClick(last_x[fingerId], last_y[fingerId], RIGHT);
             
-            // sometimes, finger-on events are not issued
-            // this is to fix problems with the indexFixer array before the first 'UP' in a series of touch events
-            if (!missingFingersChecked)
-            {
-                for (int i = 0; i< allocatedFingers; i++){
-                    indexFixer[i] = i;
-                }
-                missingFingersChecked = 1;
-            }
-            
+            holdNotMoveFar=false;
+            holdStartCoord[0]=0;
+            holdStartCoord[1]=0;
             
             holdTime=0;
             pressed[fingerId]=0;
+            last_x[fingerId] = last_y[fingerId] = 0;
             
-            
-            // same code as above to calculate original array indexes
-            int temp=0;
-            for (int i = 0; i< allocatedFingers; i++){
-                if (pressed[temp]==0){
-                    temp++;
-                    while(pressed[temp]==0 && temp<allocatedFingers)
-                        temp++;
-                }
-                if (temp<allocatedFingers)
-                    indexFixer[i]=temp;
-                else{
-                    indexFixer[i]=-1;
-                }
-                temp++;
-            }
-            
-            last_x[0] = last_y[0] = 0;
+            // calculate original array indexes
+            recalculateIndex(pressed, indexFixer, allocatedFingers);
         }
     }
     else {
-        /*if (pressed[fingerId]==1 && button == NO_CHANGE)
+        //assert(type ==XCOORD || type == YCOORD);
+        
+        //currently unused and broken for multifinger clicking
+        /*if (pressed[fingerId]==1 && button == NO_CHANGE && last_x[fingerId] > 0 && last_y[fingerId] > 0)
         {
             simulateClick(last_x[fingerId], last_y[fingerId], UP);
 
@@ -307,23 +249,46 @@ static void submitTouch(int fingerId, whatInput type, int input, ButtonState but
         if (type == YCOORD) {
             last_y[fingerId] = input;
         }
-        
-        if (/*last_x[fingerId] > 0 && last_y[fingerId] > 0 && */ pressed[fingerId]) {
+        if (pressed[fingerId] && last_x[fingerId] > 0 && last_y[fingerId] > 0) {
             simulateClick(last_x[fingerId], last_y[fingerId], NO_CHANGE);
         }
         
-        if (abs(last_x[fingerId] - holdStartCoord[0]) > 10 || abs(last_y[fingerId] - holdStartCoord[1]) > 10){ // hold finger action within 10 pixels
+        // Holding a finger has to be within 10 pixels
+        if (abs(last_x[fingerId] - holdStartCoord[0]) > 10 || abs(last_y[fingerId] - holdStartCoord[1]) > 10){
             holdNotMoveFar=false;
         }
         /*for (int i = 0; i < NUM_TOUCHES; i++) //debug
         {
-            printf("%4d, %4d", last_x[i], last_y[i]);
+            printf("%4d,%4d", last_x[i], last_y[i]);
             if (i+1<NUM_TOUCHES)
-                printf(" || ");
+                printf("||");
             else
                 printf("\n");
         }*/
     }
+    
+    if (!nothingOn)
+    {
+        short count = 0; //check for if all fingers are off
+        for (int i=0; i <= allocatedFingers; i++){
+            if (indexFixer[i]==-1)
+                count++;
+        }
+        if (count == allocatedFingers) {
+            //if true, reassign variables to default values
+            
+            nothingOn = 1;
+            allocatedFingers=1;
+            for (int i = 0; i< NUM_TOUCHES; i++){
+                indexFixer[i]=i;
+                last_x[i]=0;
+                last_y[i]=0;
+            }
+            fingerCount=1;
+        }
+    }
+    //printf("type: %d, Holdnotmovefar: %d, holdtime: %d, allocatedfingers %d, fingercount %d, missingfingerschecked: %d, nothingon: %d\n", type, holdNotMoveFar, holdTime, allocatedFingers, fingerCount, missingFingersChecked, nothingOn);
+
     //printf("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d\n", indexFixer[0], indexFixer[1], indexFixer[2], indexFixer[3], indexFixer[4], indexFixer[5], indexFixer[6], indexFixer[7], indexFixer[8], indexFixer[9]);
     
 }
@@ -374,15 +339,8 @@ static void reportHidElement(HIDElement *element) {
     
     if (element->usagePage == 1 && element->currentValue < 0x10000 && element->cookie!= 0x73) {
         
-        //element->cookies from a 0x30 or 0x31 change based on finger, represents finger basically
-        // Y axis example:
-        // 29, 38, 47, 56, 65, 74, 83, 92, 101, 110 for 1st to 10th fingers,
-        // 37, 46, 55, 64, 73, etc for removal of the nth f ingers for Y axis
-        // X axis is similar: values 32, 41, 50 for 1st to 10th, 31, 41, 49, etc, as above^
-        
         //CGDisplayPixelsWide(CGMainDisplayID())
         //CGDisplayPixelsHigh(CGMainDisplayID())
-        
         
         short value = element->currentValue & 0xffff;
         
@@ -403,7 +361,6 @@ static void reportHidElement(HIDElement *element) {
     //doubleclicktimer
     else if (element->usage == 0x56 && element->currentValue < 8000){
         submitTouch(fingerId, TIPSWITCH, element->currentValue, RIGHT);
-        //printf("%d\n", element->currentValue);
     }
     
     //button
@@ -445,26 +402,6 @@ static void reportHidElement(HIDElement *element) {
         }
     }*/
 
-    
-    // element usage guide:
-    // Scantime: 0x56
-    // Y position: 0x31 (two events are called, both represent coordinates, but first event has smaller number and is interpreted only
-    // X position: 0x30 (note above, 2 events also)
-    // Y axis fatness: 0x49
-    // Y axis fatness: 0x48
-    // Boolean for finger on/off: 0x42 (on is 1, off is 0, on is not always called first, so not reliable, also is the only one that has ElementType 2)
-    // Touchcount: 0x54 , 0x51 (0x51 is duplicate, don't use)
-    
-    
-    
-    //Order for mouse events:
-    
-    // The first sign that shows a finger pressed when no previous fingers have been pressed is the start of the timer with element usage 0x56, boolean 0x42 comes later with value 1
-    // after the first finger is pressed, the first sign of more pressed fingers is an event by element usage 0x54 that shows the number of current fingers, also 0x51 is usually 4x the number of fingers, comes later, also boolean 0x42 comes later
-    
-    // when fingers are removed when there are 2 or more fingers, element with usage 0x49, 0x48, and 0x42 get cleared in that order to 0, 0x54 updates with new number of fingers, 0x51 becomes 0 too later
-    //when there is one finger left, the event occur as follows: element with usage 0x49, 0x48, and 0x42 get cleared in that order to 0
-    
     [gLock unlock];
 }
 
@@ -496,7 +433,6 @@ int main (int argc, const char * argv[]) {
     gLock = [[NSLock alloc] init];
     InitHIDNotifications(TOUCH_VID, TOUCH_PID);
     printf("To keep driver running keep this window in the background...\n\n");
-
     
     CFRunLoopRun();
     
