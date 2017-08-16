@@ -140,9 +140,11 @@ static void recalculateIndex(bool pressed[], short indexFixer[], short allocated
 }
 
 
+
+
 static void submitTouch(int fingerId, whatInput type, int input, ButtonState button) {
 #if TOUCH_REPORT
-    printf("\n\n%s: <%d, %d> state=%d\n", __func__, x, y, button);
+    printf("%s: <%d, %d> state=%d\n", __func__, fingerId, type, button);
 #endif
     static int last_x[NUM_TOUCHES] = {
         0,
@@ -164,6 +166,10 @@ static void submitTouch(int fingerId, whatInput type, int input, ButtonState but
     static short allocatedFingers = 1;
     static short fingerCount = 1;
     static bool nothingOn = 1;
+    
+    static NSDate* lastTap = 0;
+    static NSTimeInterval tap_delays[4] = {10000};
+    static const NSTimeInterval DOUBLECLICK_DELAY = 0.2; // in seconds
     
     if (button !=DOWN){
         fingerId=indexFixer[fingerId];
@@ -205,16 +211,44 @@ static void submitTouch(int fingerId, whatInput type, int input, ButtonState but
     }
     else if (type == PRESS)
     {
+        // Generate new delay values
+        tap_delays[0] = tap_delays[1];
+        tap_delays[1] = tap_delays[2];
+        tap_delays[2] = tap_delays[3];
+        tap_delays[3] = - [lastTap timeIntervalSinceNow];
+        
+        if (tap_delays[3] > DOUBLECLICK_DELAY) {
+            tap_delays[0] = tap_delays[1] = tap_delays[2] = tap_delays[3] = 10000;
+            lastTap = 0;
+        }
+        
+        lastTap = [NSDate date];
+        
+        #if TOUCH_REPORT
+        printf("doubleclick delays: [%f %f %f %f]\n", tap_delays[0], tap_delays[1], tap_delays[2], tap_delays[3]);
+        #endif
+        
         if (button == DOWN){ // dragging: coordinate has to be assigned by now, so safe
             pressed[fingerId]=1;
             
-            holdStartCoord[0]=last_x[fingerId];
-            holdStartCoord[1]=last_y[fingerId];
+            holdStartCoord[0] = last_x[fingerId];
+            holdStartCoord[1] = last_y[fingerId];
             holdNotMoveFar=true;
         }
         
-        if (last_x[fingerId] >0 && last_y[fingerId] > 0)
-            simulateClick(last_x[fingerId], last_y[fingerId], button);
+        if (last_x[fingerId] >0 && last_y[fingerId] > 0) {
+            if (button == UP && /*tap_delays[0] < DELAY &&*/ tap_delays[1] < DOUBLECLICK_DELAY && tap_delays[2] < DOUBLECLICK_DELAY && tap_delays[3] < DOUBLECLICK_DELAY) {
+                
+                printf("DoubleClick!\n");
+                
+                simulateClick(last_x[fingerId], last_y[fingerId], DOUBLECLICK);
+                tap_delays[0] = tap_delays[1] = tap_delays[2] = tap_delays[3] = 10000;
+                lastTap = 0;
+                
+            } else {
+                simulateClick(last_x[fingerId], last_y[fingerId], button);
+            }
+        }
         
         if (button == UP){ //cleanup
             if (last_x[fingerId] > 0 && last_y[fingerId] > 0 && holdTime>7500 && holdNotMoveFar)
