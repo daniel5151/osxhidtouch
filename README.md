@@ -1,8 +1,11 @@
 osxhidtouch
 ===========
 
-(forked from astarasikov) User-space HID multitouch touchscreen driver for Mac OS X
+(forked from kyewei, who forked from astarasikov) 
 
-Adapted to fit my laptop's hardware & resolution, and figured out/fixed bugs in dragging, etc. 
+User-space HID multitouch touchscreen driver for Mac OS X
 
-Multifinger tracking works, but it is probably not possible to add proper multifinger dragging without too much input lag
+Adapted to fit the XPS 15 9560's hardware & resolution, and adding extra features 
+(like double-tap) 
+
+Multifinger tracking is in the code, but dosen't work proprly.
