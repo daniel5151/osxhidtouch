@@ -3,7 +3,6 @@
 //  HidSample
 //
 //  Created by Alexander Tarasikov on 23.11.13.
-//  Copyright (c) 2013 Alexander Tarasikov. All rights reserved.
 //
 
 #ifndef HidSample_config_h
