@@ -9,12 +9,16 @@
 #include "config.h"
 #include "HidUtils.h"
 
+// Swift Code
+#include "HidSample-Swift.h"
+static Swifty* swift;
+
 //---------------------------------------------------------------------------
 // Globals
 //---------------------------------------------------------------------------
-static IONotificationPortRef	gNotifyPort = NULL;
-static io_iterator_t		gAddedIter = 0;
-static NSLock *gLock = 0;
+static IONotificationPortRef gNotifyPort = NULL;
+static io_iterator_t         gAddedIter  = 0;
+static NSLock*               gLock       = 0;
 
 //---------------------------------------------------------------------------
 // TypeDefs
@@ -38,16 +42,20 @@ typedef enum {
     FINGERCOUNT
 } whatInput;
 
-static void simulateClick(int x, int y, ButtonState button) {
+//---------------------------------------------------------------------------
+// Simulate Mouse Events
+//---------------------------------------------------------------------------
+
+void simulateClick(int x, int y, ButtonState button) {
 #if TOUCH_REPORT
-    printf("CLICK %d %d %d\n", x, y, button);
+    printf("EVENT %d %d %d\n", x, y, button);
 #endif
     //static int eventNumber = 0;
     if (button == DOWN) {
         CGEventRef mouse_press = CGEventCreateMouseEvent(NULL,
-                kCGEventLeftMouseDown,
-                CGPointMake(x, y),
-                kCGMouseButtonLeft);
+                                                         kCGEventLeftMouseDown,
+                                                         CGPointMake(x, y),
+                                                         kCGMouseButtonLeft);
         //CGEventSetIntegerValueField(mouse_press, kCGMouseEventNumber, eventNumber);
         CGEventPost(kCGHIDEventTap, mouse_press);
         CFRelease(mouse_press);
@@ -55,9 +63,9 @@ static void simulateClick(int x, int y, ButtonState button) {
     }
     else if (button == UP) {
         CGEventRef mouse_release = CGEventCreateMouseEvent(NULL,
-                kCGEventLeftMouseUp,
-                CGPointMake(x, y),
-                kCGMouseButtonLeft);
+                                                           kCGEventLeftMouseUp,
+                                                           CGPointMake(x, y),
+                                                           kCGMouseButtonLeft);
         //CGEventSetIntegerValueField(mouse_release, kCGMouseEventNumber, eventNumber);
         CGEventPost(kCGHIDEventTap, mouse_release);
         CFRelease(mouse_release);
@@ -78,9 +86,9 @@ static void simulateClick(int x, int y, ButtonState button) {
     else if (button == DOUBLECLICK)
     {
         CGEventRef mouse_double = CGEventCreateMouseEvent(NULL,
-                kCGEventLeftMouseDown,
-                CGPointMake(x, y),
-                kCGMouseButtonLeft);
+                                                          kCGEventLeftMouseDown,
+                                                          CGPointMake(x, y),
+                                                          kCGMouseButtonLeft);
         CGEventSetIntegerValueField(mouse_double, kCGMouseEventClickState, 2);
         
         CGEventPost(kCGHIDEventTap, mouse_double);
@@ -95,9 +103,9 @@ static void simulateClick(int x, int y, ButtonState button) {
     
     if (button == NO_CHANGE) {
         CGEventRef move = CGEventCreateMouseEvent(NULL,
-                kCGEventLeftMouseDragged,
-                CGPointMake(x, y),
-                kCGMouseButtonLeft);
+                                                  kCGEventLeftMouseDragged,
+                                                  CGPointMake(x, y),
+                                                  kCGMouseButtonLeft);
         //CGEventSetIntegerValueField(move, kCGMouseEventNumber, eventNumber);
         CGEventPost(kCGHIDEventTap, move);
         CFRelease(move);
@@ -116,48 +124,42 @@ static void simulateClick(int x, int y, ButtonState button) {
     }
 }
 
+//---------------------------------------------------------------------------
+// Interpret Events
+//---------------------------------------------------------------------------
+
 // Bit of heuristics to maintain position of fingers in last_x and last_y array if
 // there are multiple fingers, and the last finger on is not the last finger taken off,
 // which usually disrupts the index used for the last_x and last_y array
 // This code recalculates the original indexes, stores them in an array
 
-static void recalculateIndex(bool pressed[], short indexFixer[], short allocatedFingers){
-    
-    short temp=0;
-    for (int i = 0; i< allocatedFingers; i++){
-        if (pressed[temp]==0){
+static void recalculateIndex(bool pressed[], short indexFixer[], short allocatedFingers) {
+    short temp = 0;
+    for (int i = 0; i< allocatedFingers; i++) {
+        if (pressed[temp] == 0) {
             temp++;
-            while(pressed[temp]==0 && temp<allocatedFingers)
+            while(pressed[temp] == 0 && temp < allocatedFingers)
                 temp++;
         }
-        if (temp<allocatedFingers)
-            indexFixer[i]=temp;
-        else{
+        if (temp < allocatedFingers)
+            indexFixer[i] = temp;
+        else {
             indexFixer[i]=-1;
         }
         temp++;
     }
 }
 
-
-
-
 static void submitTouch(int fingerId, whatInput type, int input, ButtonState button) {
+    [swift test];
+    
 #if TOUCH_REPORT
     printf("%s: <%d, %d> state=%d\n", __func__, fingerId, type, button);
 #endif
-    static int last_x[NUM_TOUCHES] = {
-        0,
-    };
-    static int last_y[NUM_TOUCHES] = {
-        0,
-    };
-    static bool pressed[NUM_TOUCHES] = {
-        0,
-    };
-    static int holdStartCoord[2] = {
-        0, 0
-    };
+    static int last_x[NUM_TOUCHES] = { 0 };
+    static int last_y[NUM_TOUCHES] = { 0 };
+    static bool pressed[NUM_TOUCHES] = { 0 };
+    static int holdStartCoord[2] = { 0, 0 };
     static short indexFixer[NUM_TOUCHES] = {
         0, 1, 2, 3, 4, 5, 6, 7, 8, 9
     };
@@ -169,45 +171,46 @@ static void submitTouch(int fingerId, whatInput type, int input, ButtonState but
     
     static NSDate* lastTap = 0;
     static NSTimeInterval tap_delays[4] = {10000};
+
     static const NSTimeInterval DOUBLECLICK_DELAY = 0.2; // in seconds
     
-    if (button !=DOWN){
-        fingerId=indexFixer[fingerId];
+    if (button !=DOWN) {
+        fingerId = indexFixer[fingerId];
     }
     
-    if (type==TIPSWITCH){
-        if (input==0){ //initialize
+    if (type == TIPSWITCH) {
+        if (input == 0) { //initialize
             allocatedFingers = 1;
             fingerCount = 1;
         }
-        nothingOn=0;
-        holdTime=input;
+        nothingOn = 0;
+        holdTime = input;
     }
-    else if (type==CONTACTID){
-        allocatedFingers=input;
+    else if (type == CONTACTID) {
+        allocatedFingers = input;
     }
-    else if (type==FINGERCOUNT){
-        if (nothingOn){ //sometimes, fingercount is called before timer is, so adjust values
-            fingerCount=input;
-            allocatedFingers=input;
+    else if (type == FINGERCOUNT) {
+        if (nothingOn) { //sometimes, fingercount is called before timer is, so adjust values
+            fingerCount = input;
+            allocatedFingers = input;
             nothingOn = 0;
         }
-        if (input>allocatedFingers)
+        if (input > allocatedFingers)
             allocatedFingers = input;
         
-        if (input>fingerCount && !nothingOn){
+        if (input > fingerCount && !nothingOn) {
             // The following small loop addresses an issue when a Tipswitch true event isn't generated
             // when fingers are placed. It compares allocated fingers to detected fingers on screen
-            for (int i=0; i< allocatedFingers; i++){
-                if (pressed[i]==0){
-                    pressed[i]=1;
-                    i=allocatedFingers; //break
+            for (int i = 0; i < allocatedFingers; i++) {
+                if (pressed[i] == 0) {
+                    pressed[i] = 1;
+                    i = allocatedFingers; //break
                 }
             }
             //needs recalculation
             recalculateIndex(pressed, indexFixer, allocatedFingers);
         }
-        fingerCount=input;
+        fingerCount = input;
     }
     else if (type == PRESS)
     {
@@ -224,16 +227,16 @@ static void submitTouch(int fingerId, whatInput type, int input, ButtonState but
         
         lastTap = [NSDate date];
         
-        #if TOUCH_REPORT
+#if TOUCH_REPORT
         printf("doubleclick delays: [%f %f %f %f]\n", tap_delays[0], tap_delays[1], tap_delays[2], tap_delays[3]);
-        #endif
+#endif
         
-        if (button == DOWN){ // dragging: coordinate has to be assigned by now, so safe
-            pressed[fingerId]=1;
+        if (button == DOWN) { // dragging: coordinate has to be assigned by now, so safe
+            pressed[fingerId] = 1;
             
             holdStartCoord[0] = last_x[fingerId];
             holdStartCoord[1] = last_y[fingerId];
-            holdNotMoveFar=true;
+            holdNotMoveFar = true;
         }
         
         if (last_x[fingerId] >0 && last_y[fingerId] > 0) {
@@ -250,16 +253,16 @@ static void submitTouch(int fingerId, whatInput type, int input, ButtonState but
             }
         }
         
-        if (button == UP){ //cleanup
-            if (last_x[fingerId] > 0 && last_y[fingerId] > 0 && holdTime>7500 && holdNotMoveFar)
+        if (button == UP) { //cleanup
+            if (last_x[fingerId] > 0 && last_y[fingerId] > 0 && holdTime > 7500 && holdNotMoveFar)
                 simulateClick(last_x[fingerId], last_y[fingerId], RIGHT);
             
-            holdNotMoveFar=false;
-            holdStartCoord[0]=0;
-            holdStartCoord[1]=0;
+            holdNotMoveFar = false;
+            holdStartCoord[0] = 0;
+            holdStartCoord[1] = 0;
             
-            holdTime=0;
-            pressed[fingerId]=0;
+            holdTime = 0;
+            pressed[fingerId] = 0;
             last_x[fingerId] = last_y[fingerId] = 0;
             
             // calculate original array indexes
@@ -270,12 +273,12 @@ static void submitTouch(int fingerId, whatInput type, int input, ButtonState but
         //assert(type ==XCOORD || type == YCOORD);
         
         //currently unused and broken for multifinger clicking
-        /*if (pressed[fingerId]==1 && button == NO_CHANGE && last_x[fingerId] > 0 && last_y[fingerId] > 0)
-        {
-            simulateClick(last_x[fingerId], last_y[fingerId], UP);
-
-            //simulateClick(last_x[fingerId], last_y[fingerId], DOWN);
-        }*/
+        /*if (pressed[fingerId] == 1 && button == NO_CHANGE && last_x[fingerId] > 0 && last_y[fingerId] > 0)
+         {
+         simulateClick(last_x[fingerId], last_y[fingerId], UP);
+         
+         //simulateClick(last_x[fingerId], last_y[fingerId], DOWN);
+         }*/
         
         if (type == XCOORD) {
             last_x[fingerId] = input;
@@ -288,23 +291,23 @@ static void submitTouch(int fingerId, whatInput type, int input, ButtonState but
         }
         
         // Holding a finger has to be within 10 pixels
-        if (abs(last_x[fingerId] - holdStartCoord[0]) > 10 || abs(last_y[fingerId] - holdStartCoord[1]) > 10){
-            holdNotMoveFar=false;
+        if (abs(last_x[fingerId] - holdStartCoord[0]) > 10 || abs(last_y[fingerId] - holdStartCoord[1]) > 10) {
+            holdNotMoveFar = false;
         }
         /*for (int i = 0; i < NUM_TOUCHES; i++) //debug
-        {
-            printf("%4d,%4d", last_x[i], last_y[i]);
-            if (i+1<NUM_TOUCHES)
-                printf("||");
-            else
-                printf("\n");
-        }*/
+         {
+         printf("%4d,%4d", last_x[i], last_y[i]);
+         if (i+1 < NUM_TOUCHES)
+         printf("||");
+         else
+         printf("\n");
+         }*/
     }
     
     if (!nothingOn)
     {
         short count = 0; //check for if all fingers are off
-        for (int i=0; i <= allocatedFingers; i++){
+        for (int i = 0; i <= allocatedFingers; i++) {
             if (indexFixer[i]==-1)
                 count++;
         }
@@ -312,80 +315,46 @@ static void submitTouch(int fingerId, whatInput type, int input, ButtonState but
             //if true, reassign variables to default values
             
             nothingOn = 1;
-            allocatedFingers=1;
-            for (int i = 0; i< NUM_TOUCHES; i++){
-                indexFixer[i]=i;
-                last_x[i]=0;
-                last_y[i]=0;
+            allocatedFingers = 1;
+            for (int i = 0; i < NUM_TOUCHES; i++) {
+                indexFixer[i] = i;
+                last_x[i] = 0;
+                last_y[i] = 0;
             }
-            fingerCount=1;
+            fingerCount = 1;
         }
     }
     //printf("type: %d, Holdnotmovefar: %d, holdtime: %d, allocatedfingers %d, fingercount %d, missingfingerschecked: %d, nothingon: %d\n", type, holdNotMoveFar, holdTime, allocatedFingers, fingerCount, missingFingersChecked, nothingOn);
-
+    
     //printf("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d\n", indexFixer[0], indexFixer[1], indexFixer[2], indexFixer[3], indexFixer[4], indexFixer[5], indexFixer[6], indexFixer[7], indexFixer[8], indexFixer[9]);
     
 }
 
-static bool acceptHidElement(HIDElement *element) {
-    printHidElement("acceptHidElement", element);
-    
-    switch (element->usagePage) {
-        case kHIDPage_GenericDesktop:
-            switch (element->usage) {
-                case kHIDUsage_GD_X:
-                case kHIDUsage_GD_Y:
-                    return true;
-            }
-            break;
-        case kHIDPage_Button:
-            switch (element->usage) {
-                case kHIDUsage_Button_1:
-                    return true;
-                    break;
-            }
-            break;
-        case kHIDPage_Digitizer:
-            return true;
-            break;
-    }
-    
-    return false;
-}
+//---------------------------------------------------------------------------
+// Interpret HID events
+//---------------------------------------------------------------------------
 
 static void reportHidElement(HIDElement *element) {
-    if (!element) {
-        return;
-    }
+    if (!element) return;
     
     [gLock lock];
-
     
     static float scale_x = SCREEN_RESX / 3966.0;
     static float scale_y = SCREEN_RESY / 2239.0;
-    
-    //printf("\n+++++++++++\n");
-    //printHidElement("report element", element);
-    //printf("------------\n");
     
     static int fingerId = 0;
     static ButtonState button = NO_CHANGE;
     
     if (element->usagePage == 1 && element->currentValue < 0x10000 && element->cookie!= 0x73) {
-        
-        //CGDisplayPixelsWide(CGMainDisplayID())
-        //CGDisplayPixelsHigh(CGMainDisplayID())
-        
         short value = element->currentValue & 0xffff;
         
-        if (element->usage==0x30){ //X
-            fingerId = (element->cookie-21)/9; //int division truncates
+        if (element->usage == 0x30) { // X
+            fingerId = (element->cookie - 21)/9; //int division truncates
             int x = (int)(value * scale_x);
             submitTouch(fingerId, XCOORD, x, NO_CHANGE);
-            
         }
-        else if (element->usage==0x31){ //Y
-            fingerId = (element->cookie-24)/9; //int division truncates
+        else if (element->usage == 0x31) { // Y
+            fingerId = (element->cookie - 24)/9; //int division truncates
             int y = (int)(value * scale_y);
             submitTouch(fingerId, YCOORD, y, NO_CHANGE);
         }
@@ -393,7 +362,7 @@ static void reportHidElement(HIDElement *element) {
     }
     
     //doubleclicktimer
-    else if (element->usage == 0x56 && element->currentValue < 8000){
+    else if (element->usage == 0x56 && element->currentValue < 8000) {
         submitTouch(fingerId, TIPSWITCH, element->currentValue, RIGHT);
     }
     
@@ -401,71 +370,42 @@ static void reportHidElement(HIDElement *element) {
     else if (element->type == 2) {
         button = (element->currentValue) ? DOWN : UP;
         //finger by cookie value, 15 is 0, 16 is 1, etc
-        fingerId=element->cookie-15;
+        fingerId = element->cookie - 15;
         
         submitTouch(fingerId, PRESS, 0, button);
     }
-    else if (element->usage == 0x51 && element->currentValue!=0){
-        submitTouch((element->cookie-17)/9, CONTACTID, element->currentValue/4, NO_CHANGE);
+    else if (element->usage == 0x51 && element->currentValue!=0) {
+        submitTouch((element->cookie - 17)/9, CONTACTID, element->currentValue / 4, NO_CHANGE);
     }
-    else if (element->usage == 0x54){
+    else if (element->usage == 0x54) {
         submitTouch(0, FINGERCOUNT, element->currentValue, NO_CHANGE);
     }
-
     
-    /*if (element->currentValue < 0x4000 && ((element->usage ==0x42 && element->type==2) || (element->usage ==0x30 && element->cookie != 0x73) || (element->usage ==0x31 && element->cookie != 0x73) || element->usage == 0x54 || element->usage == 0x51 || (element->usage ==0x56 && element->currentValue==0)))
-    {
-        switch (element->usage) {
-            case 0x56:
-                printf("\nTimer 0\n");
-                break;
-            //case 0x30:
-                //printf("X coordinate: %d, finger: %d\n", element->currentValue, (element->cookie-21)/9);
-                //break;
-            //case 0x31:
-                //printf("Y coordinate: %d, finger: %d\n", element->currentValue, (element->cookie-24)/9);
-                //break;
-            case 0x54:
-                printf("FingerCount: %d\n", element->currentValue);
-                break;
-            case 0x51:
-                printf("ContactID: %d, finger: %d\n", element->currentValue, element->cookie);
-                break;
-            case 0x42:
-                printf("Tipswitch: %s, finger: %d\n", element->currentValue? "ON": "OFF", element->cookie-15);
-        }
-    }*/
-
     [gLock unlock];
 }
-
-#ifndef max
-#define max(a, b) \
-((a > b) ? a:b)
-#endif
-
-#ifndef min
-#define min(a, b) \
-((a < b) ? a:b)
-#endif
 
 //---------------------------------------------------------------------------
 // Methods
 //---------------------------------------------------------------------------
-static void InitHIDNotifications();
-static void HIDDeviceAdded(void *refCon, io_iterator_t iterator);
-static void DeviceNotification(void *refCon, io_service_t service, natural_t messageType, void *messageArgument);
-static bool FindHIDElements(HIDDataRef hidDataRef);
-static bool SetupQueue(HIDDataRef hidDataRef);
-static void QueueCallbackFunction(
-                                  void * 			target,
-                                  IOReturn 			result,
-                                  void * 			refcon,
-                                  void * 			sender);
+static void InitHIDNotifications(SInt32, SInt32);
+static void HIDDeviceAdded(void* refCon, io_iterator_t iterator);
+static void DeviceNotification(
+    void*        refCon, 
+    io_service_t service, 
+    natural_t    messageType, 
+    void*        messageArgument
+);
+static bool FindHIDElements(HIDData* hidDataRef);
+static bool SetupQueue(HIDData* hidDataRef);
+static void QueueCallbackFunction(void* target,IOReturn result,void* refcon,void* sender);
 
-int main (int argc, const char * argv[]) {
+int main (int argc, const char*  argv[]) {
+    // Setup Swift Bridge
+    swift = [[Swifty alloc] init];
+    
     gLock = [[NSLock alloc] init];
     InitHIDNotifications(TOUCH_VID, TOUCH_PID);
+
     printf("To keep driver running keep this window in the background...\n\n");
     
     CFRunLoopRun();
@@ -483,11 +423,11 @@ int main (int argc, const char * argv[]) {
 
 static void InitHIDNotifications(SInt32 vendorID, SInt32 productID)
 {
-    CFMutableDictionaryRef 	matchingDict;
+    CFMutableDictionaryRef     matchingDict;
     CFNumberRef                 refProdID;
     CFNumberRef                 refVendorID;
-    mach_port_t 		masterPort;
-    kern_return_t		kr;
+    mach_port_t         masterPort;
+    kern_return_t        kr;
     
     // first create a master_port for my task
     //
@@ -499,7 +439,7 @@ static void InitHIDNotifications(SInt32 vendorID, SInt32 productID)
     // This is how async notifications get set up.
     //
     gNotifyPort = IONotificationPortCreate(masterPort);
-    CFRunLoopAddSource(	CFRunLoopGetCurrent(),
+    CFRunLoopAddSource(    CFRunLoopGetCurrent(),
                        IONotificationPortGetRunLoopSource(gNotifyPort),
                        kCFRunLoopDefaultMode);
     
@@ -522,15 +462,15 @@ static void InitHIDNotifications(SInt32 vendorID, SInt32 productID)
     CFRelease(refProdID);
     CFRelease(refVendorID);
     
-    // Now set up a notification to be called when a device is first matched by I/O Kit.
+    // Now set up a notification to be called when a device is first matched by I / O Kit.
     // Note that this will not catch any devices that were already plugged in so we take
     // care of those later.
-    kr = IOServiceAddMatchingNotification(gNotifyPort,			// notifyPort
-                                          kIOFirstMatchNotification,	// notificationType
-                                          matchingDict,			// matching
-                                          HIDDeviceAdded,		// callback
-                                          NULL,				// refCon
-                                          &gAddedIter			// notification
+    kr = IOServiceAddMatchingNotification(gNotifyPort,            // notifyPort
+                                          kIOFirstMatchNotification,    // notificationType
+                                          matchingDict,            // matching
+                                          HIDDeviceAdded,        // callback
+                                          NULL,                // refCon
+                                          &gAddedIter            // notification
                                           );
     
     if (kr != kIOReturnSuccess)
@@ -554,16 +494,16 @@ static void InitHIDNotifications(SInt32 vendorID, SInt32 productID)
 // and access our private data.
 //---------------------------------------------------------------------------
 
-static void HIDDeviceAdded(void *refCon, io_iterator_t iterator)
+static void HIDDeviceAdded(void* refCon, io_iterator_t iterator)
 {
-    io_object_t 		hidDevice 		= 0;
-    IOCFPlugInInterface **	plugInInterface 	= NULL;
-    IOHIDDeviceInterface122 **	hidDeviceInterface 	= NULL;
-    HRESULT 			result 			= S_FALSE;
-    HIDDataRef                  hidDataRef              = NULL;
-    IOReturn			kr;
-    SInt32 			score;
-    bool                        pass;
+    io_object_t               hidDevice          = 0;
+    IOCFPlugInInterface**     plugInInterface    = NULL;
+    IOHIDDeviceInterface122** hidDeviceInterface = NULL;
+    HRESULT                   result             = S_FALSE;
+    HIDData*                  hidDataRef         = NULL;
+    IOReturn                  kr;
+    SInt32                    score;
+    bool                      pass;
     
     /* Interate through all the devices that matched */
     while (0 != (hidDevice = IOIteratorNext(iterator)))
@@ -577,7 +517,7 @@ static void HIDDeviceAdded(void *refCon, io_iterator_t iterator)
         
         /* Obtain a device interface structure (hidDeviceInterface). */
         result = (*plugInInterface)->QueryInterface(plugInInterface, CFUUIDGetUUIDBytes(kIOHIDDeviceInterfaceID122),
-                                                    (LPVOID *)&hidDeviceInterface);
+                                                    (void* )&hidDeviceInterface);
         
         // Got the interface
         if ((result == S_OK) && hidDeviceInterface)
@@ -599,19 +539,19 @@ static void HIDDeviceAdded(void *refCon, io_iterator_t iterator)
             pass = SetupQueue(hidDataRef);
             
             
-
-            #if TOUCH_REPORT
+            
+#if TOUCH_REPORT
             printf("Please touch screen to continue.\n\n");
-            #endif
+#endif
             
             /* Register an interest in finding out anything that happens with this device (disconnection, for example) */
             IOServiceAddInterestNotification(
-                                             gNotifyPort,		// notifyPort
-                                             hidDevice,			// service
-                                             kIOGeneralInterest,		// interestType
-                                             DeviceNotification,		// callback
-                                             hidDataRef,			// refCon
-                                             &(hidDataRef->notification)	// notification
+                                             gNotifyPort,        // notifyPort
+                                             hidDevice,            // service
+                                             kIOGeneralInterest,        // interestType
+                                             DeviceNotification,        // callback
+                                             hidDataRef,            // refCon
+                                             &(hidDataRef->notification)    // notification
                                              );
             
             goto HIDDEVICEADDED_CLEANUP;
@@ -644,13 +584,13 @@ static void HIDDeviceAdded(void *refCon, io_iterator_t iterator)
 // happens.
 //---------------------------------------------------------------------------
 
-static void DeviceNotification(void *		refCon,
-                               io_service_t 	service,
-                               natural_t 	messageType,
-                               void *		messageArgument)
+static void DeviceNotification(void*         refCon,
+                               io_service_t     service,
+                               natural_t     messageType,
+                               void*         messageArgument)
 {
-    kern_return_t	kr;
-    HIDDataRef		hidDataRef = (HIDDataRef) refCon;
+    kern_return_t    kr;
+    HIDData*        hidDataRef = (HIDData*) refCon;
     
     /* Check to see if a device went away and clean up. */
     if ((hidDataRef != NULL) &&
@@ -683,15 +623,42 @@ static void DeviceNotification(void *		refCon,
 //---------------------------------------------------------------------------
 // FindHIDElements
 //---------------------------------------------------------------------------
-static bool FindHIDElements(HIDDataRef hidDataRef)
+
+static bool acceptHidElement(HIDElement *element) {
+    printHidElement("acceptHidElement", element);
+    
+    switch (element->usagePage) {
+        case kHIDPage_GenericDesktop:
+            switch (element->usage) {
+                case kHIDUsage_GD_X:
+                case kHIDUsage_GD_Y:
+                    return true;
+            }
+            break;
+        case kHIDPage_Button:
+            switch (element->usage) {
+                case kHIDUsage_Button_1:
+                    return true;
+                    break;
+            }
+            break;
+        case kHIDPage_Digitizer:
+            return true;
+            break;
+    }
+    
+    return false;
+}
+
+static bool FindHIDElements(HIDData* hidDataRef)
 {
-    CFArrayRef              elementArray	= NULL;
+    CFArrayRef              elementArray    = NULL;
     CFMutableDictionaryRef  hidElements     = NULL;
     CFMutableDataRef        newData         = NULL;
-    CFNumberRef             number		= NULL;
-    CFDictionaryRef         element		= NULL;
+    CFNumberRef             number        = NULL;
+    CFDictionaryRef         element        = NULL;
     HIDElement              newElement;
-    IOReturn                ret		= kIOReturnError;
+    IOReturn                ret        = kIOReturnError;
     unsigned                i;
     
     if (!hidDataRef)
@@ -719,7 +686,7 @@ static bool FindHIDElements(HIDDataRef hidDataRef)
     //CFShow(elementArray);
     
     /* Iterate through the elements and read their values. */
-    for (i=0; i<CFArrayGetCount(elementArray); i++)
+    for (i = 0; i < CFArrayGetCount(elementArray); i++)
     {
         element = (CFDictionaryRef) CFArrayGetValueAtIndex(elementArray, i);
         if (!element)
@@ -751,7 +718,7 @@ static bool FindHIDElements(HIDDataRef hidDataRef)
         if (!number) continue;
         CFNumberGetValue(number, kCFNumberIntType, &(newElement.type));
         
-        /* Pay attention to X/Y coordinates of a pointing device and
+        /* Pay attention to X / Y coordinates of a pointing device and
          the first mouse button.  For other elements, go on to the
          next element. */
         
@@ -790,24 +757,24 @@ FIND_ELEMENT_CLEANUP:
 //---------------------------------------------------------------------------
 // SetupQueue
 //---------------------------------------------------------------------------
-static bool SetupQueue(HIDDataRef hidDataRef)
+static bool SetupQueue(HIDData* hidDataRef)
 {
-    CFIndex		count 		= 0;
-    CFIndex		i 		= 0;
-    CFMutableDataRef *	elements	= NULL;
-    CFStringRef *	keys		= NULL;
-    IOReturn		ret;
-    HIDElementRef	tempHIDElement	= NULL;
-    bool		cookieAdded 	= false;
+    CFIndex           count    = 0;
+    CFIndex           i        = 0;
+    CFMutableDataRef* elements = NULL;
+    CFStringRef *     keys     = NULL;
+    IOReturn          ret;
+    HIDElement*    tempHIDElement    = NULL;
+    bool        cookieAdded     = false;
     bool                boolRet         = true;
     
     if (!hidDataRef->hidElementDictionary || (((count = CFDictionaryGetCount(hidDataRef->hidElementDictionary)) <= 0)))
         return false;
     
-    keys 	= (CFStringRef *)malloc(sizeof(CFStringRef) * count);
-    elements 	= (CFMutableDataRef *)malloc(sizeof(CFMutableDataRef) * count);
+    keys     = (CFStringRef *)malloc(sizeof(CFStringRef) * count);
+    elements     = (CFMutableDataRef *)malloc(sizeof(CFMutableDataRef) * count);
     
-    CFDictionaryGetKeysAndValues(hidDataRef->hidElementDictionary, (const void **)keys, (const void **)elements);
+    CFDictionaryGetKeysAndValues(hidDataRef->hidElementDictionary, (const void* *)keys, (const void* *)elements);
     
     hidDataRef->hidQueueInterface = (*hidDataRef->hidDeviceInterface)->allocQueue(hidDataRef->hidDeviceInterface);
     if (!hidDataRef->hidQueueInterface)
@@ -823,10 +790,10 @@ static bool SetupQueue(HIDDataRef hidDataRef)
         goto SETUP_QUEUE_CLEANUP;
     }
     
-    for (i=0; i<count; i++)
+    for (i = 0; i < count; i++)
     {
         if (!elements[i] ||
-            !(tempHIDElement = (HIDElementRef)CFDataGetMutableBytePtr(elements[i])))
+            !(tempHIDElement = (HIDElement*)CFDataGetMutableBytePtr(elements[i])))
             continue;
         
         printHidElement("SetupQueue", tempHIDElement);
@@ -886,17 +853,17 @@ SETUP_QUEUE_CLEANUP:
 // QueueCallbackFunction
 //---------------------------------------------------------------------------
 static void QueueCallbackFunction(
-                                  void * 			target,
-                                  IOReturn 			result,
-                                  void * 			refcon,
-                                  void * 			sender)
+                                  void*              target,
+                                  IOReturn             result,
+                                  void*              refcon,
+                                  void*              sender)
 {
-    HIDDataRef          hidDataRef      = (HIDDataRef)refcon;
-    AbsoluteTime 	zeroTime 	= {0,0};
-    CFNumberRef		number		= NULL;
-    CFMutableDataRef	element		= NULL;
-    HIDElementRef	tempHIDElement  = NULL;//(HIDElementRef)refcon;
-    IOHIDEventStruct 	event;
+    HIDData*          hidDataRef      = (HIDData*)refcon;
+    AbsoluteTime     zeroTime     = {0,0};
+    CFNumberRef        number        = NULL;
+    CFMutableDataRef    element        = NULL;
+    HIDElement*    tempHIDElement  = NULL;//(HIDElementRef)refcon;
+    IOHIDEventStruct     event;
     bool                change;
     
     if (!hidDataRef || (sender != hidDataRef->hidQueueInterface))
@@ -936,3 +903,4 @@ static void QueueCallbackFunction(
     }
     
 }
+

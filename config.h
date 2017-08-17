@@ -13,6 +13,7 @@
 
 #define NUM_TOUCHES 10
 
+// Modified for XPS 15
 #define TOUCH_VID 0x04f3
 #define TOUCH_PID 0x24a1
 
