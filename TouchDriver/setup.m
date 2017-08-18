@@ -9,6 +9,7 @@
 
 #include "handlers.h"
 #include "utils.h"
+#include "config.h"
 
 //---------------------------------------------------------------------------
 // Globals

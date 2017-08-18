@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 48;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -35,15 +35,15 @@
 		113D4CDF183FFFC30051122B /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		113D4CE1183FFFC60051122B /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		113D4CE3184000800051122B /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
-		113D4CE51840DF7A0051122B /* config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = config.h; path = ../config.h; sourceTree = "<group>"; tabWidth = 4; wrapsLines = 1; };
 		113D4CE61840E8600051122B /* utils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = utils.h; sourceTree = "<group>"; };
 		113D4CE71842AE330051122B /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
-		113F64D6183E93B20041DE1B /* HidSample */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = HidSample; sourceTree = BUILT_PRODUCTS_DIR; };
+		113F64D6183E93B20041DE1B /* HidSample */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = HidSample; path = TouchDriver; sourceTree = BUILT_PRODUCTS_DIR; };
 		113F64D9183E93B20041DE1B /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		113F64DC183E93B20041DE1B /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		113F64DF183E93B20041DE1B /* TouchDriver-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "TouchDriver-Prefix.pch"; sourceTree = "<group>"; };
-		625A527E1F45E07600EF67A4 /* TouchDriver-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "TouchDriver-Bridging-Header.h"; sourceTree = "<group>"; };
 		625A527F1F45E07600EF67A4 /* submitTouch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = submitTouch.swift; sourceTree = "<group>"; };
+		628671651F4798CD00E02DE2 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = SOURCE_ROOT; };
+		628671661F4798D400E02DE2 /* TouchDriver-Bridging-Header.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "TouchDriver-Bridging-Header.h"; sourceTree = "<group>"; };
 		62EB7D631F464681006D9BC4 /* setup.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = setup.m; sourceTree = "<group>"; };
 		62EB7D651F464B45006D9BC4 /* handlers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = handlers.h; sourceTree = "<group>"; };
 		62EB7D661F464B45006D9BC4 /* handlers.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = handlers.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -100,15 +100,15 @@
 		113F64DB183E93B20041DE1B /* TouchDriver */ = {
 			isa = PBXGroup;
 			children = (
-				113D4CE51840DF7A0051122B /* config.h */,
 				62EB7D651F464B45006D9BC4 /* handlers.h */,
 				62EB7D661F464B45006D9BC4 /* handlers.m */,
-				625A527E1F45E07600EF67A4 /* TouchDriver-Bridging-Header.h */,
 				62EB7D671F464B45006D9BC4 /* setup.h */,
 				62EB7D631F464681006D9BC4 /* setup.m */,
 				113D4CE61840E8600051122B /* utils.h */,
+				628671651F4798CD00E02DE2 /* config.h */,
 				62EB7D691F4655D4006D9BC4 /* utils.m */,
 				62EB7D6E1F465AE2006D9BC4 /* simInput.h */,
+				628671661F4798D400E02DE2 /* TouchDriver-Bridging-Header.h */,
 				62EB7D6F1F465AF6006D9BC4 /* simInput.m */,
 				113F64DC183E93B20041DE1B /* main.m */,
 				625A527F1F45E07600EF67A4 /* submitTouch.swift */,
@@ -160,7 +160,7 @@
 				};
 			};
 			buildConfigurationList = 113F64D1183E93B20041DE1B /* Build configuration list for PBXProject "TouchDriver" */;
-			compatibilityVersion = "Xcode 3.2";
+			compatibilityVersion = "Xcode 8.0";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (

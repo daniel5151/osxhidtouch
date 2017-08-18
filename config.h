@@ -19,4 +19,7 @@
 #define SCREEN_RESX 1920
 #define SCREEN_RESY 1080
 
+#define TOUCH_RESX 4004.0
+#define TOUCH_RESY 2264.0
+
 #endif
