@@ -8,49 +8,35 @@
 import Foundation
 
 /*
-
  This is a direct port of the objective-c handler function
 
  With the handler function *working* in Swift, the new goal is to rewrite it
  to be a *lot* cleaner
-
  */
 
+let NUM_TOUCHES: Int = 10
 
+let DOUBLECLICK_DELAY: TimeInterval = 0.2
 
-
-// Bit of heuristics to maintain position of fingers in last_x and last_y array
-// if there are multiple fingers, and the last finger on is not the last finger
-// taken off, which usually disrupts the index used for the last_x and last_y
-// array
-// This code recalculates the original indexes, stores them in an array
-
-func recalculateIndex(pressed: inout [Bool], indexFixer: inout [Int], allocatedFingers: Int) {
-    var temp = 0
-
-    for i in 0...(allocatedFingers - 1) {
-        if (temp < allocatedFingers && pressed[temp] == false) {
-            temp += 1
-            while pressed[temp] == false && temp < allocatedFingers {
-                temp += 1
-            }
-        }
-
-        indexFixer[i] = temp < allocatedFingers ? temp : -1;
-
-        temp += 1
-    }
+struct Event {
+    let fingerId: Int
+    
+    let when: Date
+    let type: InputType
+    let button: ButtonState
+    
+    let input: Int
 }
 
 class Swifty : NSObject {
-    var indexFixer: [Int]
-
-    var pressed: [Bool] = [Bool](repeating: false, count: Int(NUM_TOUCHES))
+    let events = ThingStream<Event>(maxSize: 50)
+    
+    var pressed: [Bool] = [Bool](repeating: false, count: NUM_TOUCHES)
 
     var holdStartCoord = [0, 0]
     var holdNotMoveFar = false
-    var last_x = [Int](repeating: 0, count: Int(NUM_TOUCHES))
-    var last_y = [Int](repeating: 0, count: Int(NUM_TOUCHES))
+    var last_x = [Int](repeating: 0, count: NUM_TOUCHES)
+    var last_y = [Int](repeating: 0, count: NUM_TOUCHES)
 
     var allocatedFingers = 1
     var fingerCount = 1
@@ -60,18 +46,31 @@ class Swifty : NSObject {
 
     var lastTap: Date = Date(timeIntervalSince1970: 0)
     var tap_delays: [TimeInterval] = [TimeInterval](repeating: 10000, count: 4)
-
-    let DOUBLECLICK_DELAY: TimeInterval = 0.2
-
-    @objc override init() {
-        self.indexFixer = Array(0...Int(NUM_TOUCHES - 1))
+    
+    // Bit of heuristics to maintain position of fingers in last_x and last_y
+    // array if there are multiple fingers, and the last finger on is not the
+    // last finger taken off, which usually disrupts the index used for the
+    // last_x and last_y array
+    // This code recalculates the original indexes, stores them in an array
+    var indexFixer: [Int] = [Int](0..<NUM_TOUCHES)
+    func recalculateIndex() {
+        var temp = 0
+        for i in 0..<allocatedFingers {
+            while temp < allocatedFingers && pressed[temp] == false {
+                temp += 1
+            }
+            
+            self.indexFixer[i] = temp < allocatedFingers ? temp : -1;
+            
+            temp += 1
+        }
     }
 
     @objc func submitTouch(fingerId: Int, type: InputType, input: Int, button: ButtonState) {
         var fingerId = fingerId;
 
         if button != DOWN {
-            fingerId = indexFixer[fingerId]
+            fingerId = self.indexFixer[fingerId]
         }
 
         if fingerId == -1 { return }
@@ -104,7 +103,7 @@ class Swifty : NSObject {
                 // The following small loop addresses an issue when a Tipswitch true
                 // event isn't generated when fingers are placed. It compares
                 // allocated fingers to detected fingers on screen
-                for i in 0...(allocatedFingers - 1) {
+                for i in 0..<allocatedFingers {
                     if (pressed[i] == false) {
                         pressed[i] = true
                         break
@@ -112,7 +111,7 @@ class Swifty : NSObject {
                 }
 
                 // needs recalculation
-                recalculateIndex(pressed: &pressed, indexFixer: &indexFixer, allocatedFingers: allocatedFingers)
+                recalculateIndex()
             }
             fingerCount = input;
         case PRESS:
@@ -145,7 +144,6 @@ class Swifty : NSObject {
                 if (button == UP && /*tap_delays[0] < DELAY &&*/ tap_delays[1] < DOUBLECLICK_DELAY && tap_delays[2] < DOUBLECLICK_DELAY && tap_delays[3] < DOUBLECLICK_DELAY) {
 
                     simulateClick(Int32(last_x[fingerId]), Int32(last_y[fingerId]), DOUBLECLICK);
-//                    print("simulateClick(\(last_x[fingerId]), \(last_y[fingerId]), DOUBLECLICK)")
 
                     tap_delays[0] = 10000
                     tap_delays[1] = 10000
@@ -154,14 +152,12 @@ class Swifty : NSObject {
                     lastTap = Date(timeIntervalSince1970: 0)
                 } else {
                     simulateClick(Int32(last_x[fingerId]), Int32(last_y[fingerId]), button);
-//                    print("simulateClick(\(last_x[fingerId]), \(last_y[fingerId]), \(button)")
                 }
             }
 
             if (button == UP) { //cleanup
                 if last_x[fingerId] > 0 && last_y[fingerId] > 0 && holdTime > 7500 && holdNotMoveFar {
                     simulateClick(Int32(last_x[fingerId]), Int32(last_y[fingerId]), RIGHT);
-//                    print("simulateClick(\(last_x[fingerId]), \(last_y[fingerId]), RIGHT)")
                 }
 
                 holdNotMoveFar = false
@@ -173,7 +169,7 @@ class Swifty : NSObject {
                 last_y[fingerId] = 0
 
                 // calculate original array indexes
-                recalculateIndex(pressed: &pressed, indexFixer: &indexFixer, allocatedFingers: allocatedFingers)
+                recalculateIndex()
             }
         case XCOORD, YCOORD:
             if type == XCOORD { last_x[fingerId] = input }
@@ -181,7 +177,6 @@ class Swifty : NSObject {
 
             if pressed[fingerId] && last_x[fingerId] > 0 && last_y[fingerId] > 0 {
                 simulateClick(Int32(last_x[fingerId]), Int32(last_y[fingerId]), NO_CHANGE);
-//                print("simulateClick(\(last_x[fingerId]), \(last_y[fingerId]), NO_CHANGE)")
             }
 
             // Holding a finger has to be within 10 pixels
@@ -195,8 +190,8 @@ class Swifty : NSObject {
 
         if !nothingOn {
             var count = 0; //check for if all fingers are off
-            for i in 0...(allocatedFingers - 1) {
-                if indexFixer[i] == -1 {
+            for i in 0..<allocatedFingers {
+                if self.indexFixer[i] == -1 {
                     count += 1
                 }
             }
@@ -205,8 +200,8 @@ class Swifty : NSObject {
 
                 nothingOn = true
                 allocatedFingers = 1;
-                for i in 0...Int(NUM_TOUCHES - 1) {
-                    indexFixer[i] = i;
+                for i in 0..<NUM_TOUCHES {
+                    self.indexFixer[i] = i;
                     last_x[i] = 0;
                     last_y[i] = 0;
                 }

@@ -12,6 +12,7 @@
 		113D4CE4184000800051122B /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 113D4CE3184000800051122B /* ApplicationServices.framework */; };
 		113F64DA183E93B20041DE1B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 113F64D9183E93B20041DE1B /* Foundation.framework */; };
 		113F64DD183E93B20041DE1B /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 113F64DC183E93B20041DE1B /* main.m */; };
+		621AE76B1F48AFE60009052A /* ThingStream.swift in Sources */ = {isa = PBXBuildFile; fileRef = 621AE76A1F48AFE60009052A /* ThingStream.swift */; };
 		625A52801F45E07600EF67A4 /* submitTouch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 625A527F1F45E07600EF67A4 /* submitTouch.swift */; };
 		62EB7D641F464681006D9BC4 /* setup.m in Sources */ = {isa = PBXBuildFile; fileRef = 62EB7D631F464681006D9BC4 /* setup.m */; };
 		62EB7D681F464B46006D9BC4 /* handlers.m in Sources */ = {isa = PBXBuildFile; fileRef = 62EB7D661F464B45006D9BC4 /* handlers.m */; };
@@ -41,6 +42,7 @@
 		113F64D9183E93B20041DE1B /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		113F64DC183E93B20041DE1B /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		113F64DF183E93B20041DE1B /* TouchDriver-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "TouchDriver-Prefix.pch"; sourceTree = "<group>"; };
+		621AE76A1F48AFE60009052A /* ThingStream.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ThingStream.swift; sourceTree = "<group>"; };
 		625A527F1F45E07600EF67A4 /* submitTouch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = submitTouch.swift; sourceTree = "<group>"; };
 		628671651F4798CD00E02DE2 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = SOURCE_ROOT; };
 		628671661F4798D400E02DE2 /* TouchDriver-Bridging-Header.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "TouchDriver-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -107,6 +109,7 @@
 				113D4CE61840E8600051122B /* utils.h */,
 				628671651F4798CD00E02DE2 /* config.h */,
 				62EB7D691F4655D4006D9BC4 /* utils.m */,
+				621AE76A1F48AFE60009052A /* ThingStream.swift */,
 				62EB7D6E1F465AE2006D9BC4 /* simInput.h */,
 				628671661F4798D400E02DE2 /* TouchDriver-Bridging-Header.h */,
 				62EB7D6F1F465AF6006D9BC4 /* simInput.m */,
@@ -184,6 +187,7 @@
 				62EB7D701F465AF6006D9BC4 /* simInput.m in Sources */,
 				62EB7D6A1F4655D4006D9BC4 /* utils.m in Sources */,
 				113F64DD183E93B20041DE1B /* main.m in Sources */,
+				621AE76B1F48AFE60009052A /* ThingStream.swift in Sources */,
 				625A52801F45E07600EF67A4 /* submitTouch.swift in Sources */,
 				62EB7D681F464B46006D9BC4 /* handlers.m in Sources */,
 				62EB7D641F464681006D9BC4 /* setup.m in Sources */,

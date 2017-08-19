@@ -18,29 +18,6 @@ extern NSLock* gLock;
 // Interpret Events
 //---------------------------------------------------------------------------
 
-// Bit of heuristics to maintain position of fingers in last_x and last_y array
-// if there are multiple fingers, and the last finger on is not the last finger
-// taken off, which usually disrupts the index used for the last_x and last_y
-// array
-// This code recalculates the original indexes, stores them in an array
-
-void recalculateIndex(bool pressed[], short indexFixer[], short allocFingers) {
-    short temp = 0;
-    for (int i = 0; i< allocFingers; i++) {
-        if (pressed[temp] == 0) {
-            temp++;
-            while(pressed[temp] == 0 && temp < allocFingers)
-                temp++;
-        }
-        if (temp < allocFingers)
-            indexFixer[i] = temp;
-        else {
-            indexFixer[i]=-1;
-        }
-        temp++;
-    }
-}
-
 void submitTouch(int fingerId, InputType type, int input, ButtonState button) {
     // Yeah boi! Let's GET SWIFTY
 
@@ -56,8 +33,8 @@ void reportHidElement(HIDElement *element) {
 
     [gLock lock];
 
-    static double scale_x = SCREEN_RESX / TOUCH_RESX;
-    static double scale_y = SCREEN_RESY / TOUCH_RESY;
+    const double scale_x = SCREEN_RESX / TOUCH_RESX;
+    const double scale_y = SCREEN_RESY / TOUCH_RESY;
 
     static int fingerId = 0;
     static ButtonState button = NO_CHANGE;
