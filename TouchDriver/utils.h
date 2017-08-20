@@ -37,47 +37,25 @@ typedef struct HIDElement {
 } HIDElement;
 
 typedef enum {
-    UP,
-    DOWN,
-    NO_CHANGE,
-    MOVE,
-    RIGHT,
-    DOUBLECLICK
+    BTN_UP,
+    BTN_DOWN,
+    BTN_NO_CHANGE,
+    BTN_MOVE,
+    BTN_RIGHT,
+    BTN_2_CLICK,
+
+    BTN_DUMMY
 } ButtonState;
 
-static inline const char *ButtonState_toString(ButtonState f) {
-    static const char *strings[] = {
-        "UP",
-        "DOWN",
-        "NO_CHANGE",
-        "MOVE",
-        "RIGHT",
-        "DOUBLECLICK"
-    };
-
-    return strings[f];
-}
-
 typedef enum {
-    TIPSWITCH,
-    PRESS,
-    CONTACTID,
-    XCOORD,
-    YCOORD,
-    FINGERCOUNT
+    INP_TIPSWITCH,
+    INP_PRESS,
+    INP_CONTACTID,
+    INP_XCOORD,
+    INP_YCOORD,
+    INP_FINGERCOUNT,
+
+    INP_DUMMY
 } InputType;
-
-static inline const char *InputType_toString(InputType f) {
-    static const char *strings[] = {
-        "TIPSWITCH",
-        "PRESS",
-        "CONTACTID",
-        "XCOORD",
-        "YCOORD",
-        "FINGERCOUNT"
-    };
-
-    return strings[f];
-}
 
 #endif

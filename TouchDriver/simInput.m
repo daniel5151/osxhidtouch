@@ -12,7 +12,7 @@
 #include "utils.h"
 
 void simulateClick(int x, int y, ButtonState button) {
-    if (button == DOWN) {
+    if (button == BTN_DOWN) {
         CGEventRef mouse_press = CGEventCreateMouseEvent(NULL,
                                                          kCGEventLeftMouseDown,
                                                          CGPointMake(x, y),
@@ -22,7 +22,7 @@ void simulateClick(int x, int y, ButtonState button) {
         CFRelease(mouse_press);
         //eventNumber++;
     }
-    else if (button == UP) {
+    else if (button == BTN_UP) {
         CGEventRef mouse_release = CGEventCreateMouseEvent(NULL,
                                                            kCGEventLeftMouseUp,
                                                            CGPointMake(x, y),
@@ -32,7 +32,7 @@ void simulateClick(int x, int y, ButtonState button) {
         CFRelease(mouse_release);
         //eventNumber++;
     }
-    else if (button == RIGHT) {
+    else if (button == BTN_RIGHT) {
         CGEventRef mouse_right = CGEventCreateMouseEvent(NULL,
                                                          kCGEventRightMouseDown,
                                                          CGPointMake(x, y),
@@ -44,7 +44,7 @@ void simulateClick(int x, int y, ButtonState button) {
         CFRelease(mouse_right);
         //eventNumber++;
     }
-    else if (button == DOUBLECLICK)
+    else if (button == BTN_2_CLICK)
     {
         CGEventRef mouse_double = CGEventCreateMouseEvent(NULL,
                                                           kCGEventLeftMouseDown,
@@ -62,7 +62,7 @@ void simulateClick(int x, int y, ButtonState button) {
         CFRelease(mouse_double);
     }
 
-    if (button == NO_CHANGE) {
+    if (button == BTN_NO_CHANGE) {
         CGEventRef move = CGEventCreateMouseEvent(NULL,
                                                   kCGEventLeftMouseDragged,
                                                   CGPointMake(x, y),
@@ -73,7 +73,7 @@ void simulateClick(int x, int y, ButtonState button) {
         //eventNumber++;
     }
 
-    if (button == MOVE) {
+    if (button == BTN_MOVE) {
         CGEventRef move = CGEventCreateMouseEvent(NULL,
                                                   kCGEventMouseMoved,
                                                   CGPointMake(x, y),
@@ -83,4 +83,27 @@ void simulateClick(int x, int y, ButtonState button) {
         CFRelease(move);
         //eventNumber++;
     }
+}
+
+#import <ScriptingBridge/ScriptingBridge.h>
+#import "SystemEvents.h"
+
+// https://stackoverflow.com/questions/29032726/open-notification-center-programmatically-on-os-x
+void openNotificationCenter() {
+    static bool firstrun = true;
+    static SystemEventsMenuBarItem *item = nil;
+
+    if (firstrun) {
+        SystemEventsApplication *systemEventsApp = (SystemEventsApplication *)[[SBApplication alloc] initWithBundleIdentifier:@"com.apple.systemevents"];
+        SystemEventsApplicationProcess *sysUIServer = [systemEventsApp.applicationProcesses objectWithName:@"SystemUIServer"];
+
+        for (SystemEventsMenuBar *menuBar in sysUIServer.menuBars) {
+            item = [menuBar.menuBarItems objectWithName:@"Notification Center"];
+            if (item != nil && [item.name isEqualToString:@"Notification Center"])
+                break;
+        }
+    }
+
+    firstrun = false;
+    [item clickAt:nil];
 }

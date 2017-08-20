@@ -10,4 +10,6 @@
 
 void simulateClick(int x, int y, ButtonState button);
 
+void openNotificationCenter(void);
+
 #endif /* simInput_h */

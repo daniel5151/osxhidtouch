@@ -8,7 +8,7 @@ import Foundation
 
 /**
  Model a stream of T.
- 
+
  Once the max-size is reached, pushes result in the removal of the oldest
  element in the list (FIFO)
  */
@@ -16,50 +16,50 @@ public final class ThingStream<T> {
     // Internally represented as a linked list
     private class Node<T> {
         let val: T
-        
+
         var next: Node<T>? = nil
         var prev: Node<T>? = nil
-        
+
         init(value: T) {
             self.val = value
         }
     }
-    
+
     private let maxSize: UInt
     private(set) var size: UInt = 0
-    
+
     private var first: Node<T>?
     private var last: Node<T>?
-    
+
     init(maxSize: UInt) {
         assert(maxSize > 0)
         self.maxSize = maxSize
     }
-    
+
     func push(val: T) {
         let newNode = Node(value: val)
-        
+
         if self.first == nil {
             assert(self.last == nil)
-            
+
             self.first = newNode
             self.last = newNode
-            
+
             size = 1
-            
+
             return
         }
-        
-        // Otherwise, add a element to the end
-        newNode.prev = self.last
-        self.last!.next = newNode
-        self.last = newNode
+
+        // Otherwise, add a element to the front
+        newNode.next = self.first
+        self.first!.prev = newNode
+        self.first = newNode
         size += 1
-        
-        // Remove an element from the front if we have exceeded the max size
+
+        // Remove an element from the back if we have exceeded the max size
         if self.size > self.maxSize {
-            self.first!.next!.prev = nil
-            self.first = self.first!.next
+            self.last!.prev!.next = nil
+            self.last = self.last!.prev
             self.size -= 1
         }
     }
@@ -84,19 +84,19 @@ extension ThingStream : Sequence {
     public struct ThingStreamIterator : IteratorProtocol {
         let linkedList: ThingStream<T>
         private var next_node: Node<T>?
-        
+
         init(_ linkedList: ThingStream<T>) {
             self.linkedList = linkedList
             self.next_node = linkedList.first
         }
-        
+
         public mutating func next() -> T? {
             guard let prev_node = next_node else { return nil }
             next_node = prev_node.next
             return prev_node.val
         }
     }
-    
+
     public func makeIterator() -> ThingStreamIterator {
         return ThingStreamIterator(self)
     }
