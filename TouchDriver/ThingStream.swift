@@ -7,7 +7,7 @@
 import Foundation
 
 /**
- Model a stream of T.
+ Model a stream of Things.
 
  Once the max-size is reached, pushes result in the removal of the oldest
  element in the list (FIFO)
@@ -26,16 +26,26 @@ public final class ThingStream<T> {
     }
 
     private let maxSize: UInt
+    
+    /// Number of elements in the stream
     private(set) var size: UInt = 0
 
     private var first: Node<T>?
     private var last: Node<T>?
 
+    
+    /// Init new stream
+    ///
+    /// - Parameter maxSize: Max number of elements
     init(maxSize: UInt) {
         assert(maxSize > 0)
         self.maxSize = maxSize
     }
 
+    
+    /// Add Thing to stream
+    ///
+    /// - Parameter val: The Thing to add!
     func push(val: T) {
         let newNode = Node(value: val)
 
@@ -62,6 +72,14 @@ public final class ThingStream<T> {
             self.last = self.last!.prev
             self.size -= 1
         }
+    }
+    
+    /// Empty out the stream
+    func clear() {
+        // the magic of Garbage Collection :)
+        self.first = nil
+        self.last = nil
+        self.size = 0
     }
 }
 

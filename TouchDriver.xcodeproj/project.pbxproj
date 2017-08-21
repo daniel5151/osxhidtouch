@@ -43,7 +43,7 @@
 		113F64DC183E93B20041DE1B /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		113F64DF183E93B20041DE1B /* TouchDriver-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "TouchDriver-Prefix.pch"; sourceTree = "<group>"; };
 		621AE76A1F48AFE60009052A /* ThingStream.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ThingStream.swift; sourceTree = "<group>"; };
-		625A527F1F45E07600EF67A4 /* submitTouch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = submitTouch.swift; sourceTree = "<group>"; };
+		625A527F1F45E07600EF67A4 /* submitTouch.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = submitTouch.swift; sourceTree = "<group>"; tabWidth = 2; wrapsLines = 1; };
 		62796ED31F48FA5100AE54B8 /* SystemEvents.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SystemEvents.h; sourceTree = "<group>"; };
 		628671651F4798CD00E02DE2 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = SOURCE_ROOT; };
 		628671661F4798D400E02DE2 /* TouchDriver-Bridging-Header.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "TouchDriver-Bridging-Header.h"; sourceTree = "<group>"; };
