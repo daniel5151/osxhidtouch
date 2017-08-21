@@ -7,25 +7,25 @@
 
 import Foundation
 
-func simulateClick(x: Int, y: Int, button: ButtonState) {
-    let point = CGPoint(x: x, y: y)
+func simulateClick(touch: Touch, button: ButtonState) {
+    let point = CGPoint(x: touch.x, y: touch.y)
 
     switch button {
-    case BTN_DOWN:
+    case ButtonState.DOWN:
         let mouse_press = CGEvent(mouseEventSource: nil,
                                   mouseType: CGEventType.leftMouseDown,
                                   mouseCursorPosition: point,
                                   mouseButton: CGMouseButton.left)
 
         mouse_press?.post(tap: CGEventTapLocation.cghidEventTap)
-    case BTN_UP:
+    case ButtonState.UP:
         let mouse_release = CGEvent(mouseEventSource: nil,
                                     mouseType: CGEventType.leftMouseUp,
                                     mouseCursorPosition: point,
                                     mouseButton: CGMouseButton.left)
 
         mouse_release?.post(tap: CGEventTapLocation.cghidEventTap)
-    case BTN_RIGHT:
+    case ButtonState.RIGHT:
         let mouse_right = CGEvent(mouseEventSource: nil,
                                   mouseType: CGEventType.rightMouseDown,
                                   mouseCursorPosition: point,
@@ -35,7 +35,7 @@ func simulateClick(x: Int, y: Int, button: ButtonState) {
         mouse_right?.type = CGEventType.rightMouseUp
         mouse_right?.post(tap: CGEventTapLocation.cghidEventTap)
 
-    case BTN_2_CLICK:
+    case ButtonState.DBL_CLICK:
         let mouse_double = CGEvent(mouseEventSource: nil,
                                    mouseType: CGEventType.leftMouseDown,
                                    mouseCursorPosition: point,
@@ -45,16 +45,12 @@ func simulateClick(x: Int, y: Int, button: ButtonState) {
         mouse_double?.post(tap: CGEventTapLocation.cghidEventTap)
         mouse_double?.type = CGEventType.leftMouseUp
         mouse_double?.post(tap: CGEventTapLocation.cghidEventTap)
-    case BTN_NO_CHANGE:
+    case ButtonState.NO_CHANGE:
         let move = CGEvent(mouseEventSource: nil,
                            mouseType: CGEventType.leftMouseDragged,
                            mouseCursorPosition: point,
                            mouseButton: CGMouseButton.left)
         move?.post(tap: CGEventTapLocation.cghidEventTap)
-    case BTN_MOVE:
-        break
-    case BTN_DUMMY:
-        break
     default:
         break
     }

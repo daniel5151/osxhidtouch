@@ -7,17 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		113D4CE0183FFFC30051122B /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 113D4CDF183FFFC30051122B /* CoreFoundation.framework */; };
-		113D4CE2183FFFC60051122B /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 113D4CE1183FFFC60051122B /* IOKit.framework */; };
-		113D4CE4184000800051122B /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 113D4CE3184000800051122B /* ApplicationServices.framework */; };
-		113F64DA183E93B20041DE1B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 113F64D9183E93B20041DE1B /* Foundation.framework */; };
-		113F64DD183E93B20041DE1B /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 113F64DC183E93B20041DE1B /* main.m */; };
 		621AE76B1F48AFE60009052A /* ThingStream.swift in Sources */ = {isa = PBXBuildFile; fileRef = 621AE76A1F48AFE60009052A /* ThingStream.swift */; };
 		625A52801F45E07600EF67A4 /* touchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 625A527F1F45E07600EF67A4 /* touchHandler.swift */; };
 		625E5A321F4B4ABE008CD4A1 /* simInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 625E5A311F4B4ABE008CD4A1 /* simInput.swift */; };
+		6273EF1B1F4B68E100BD6A60 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6273EF1A1F4B68E100BD6A60 /* main.swift */; };
+		6273EF1D1F4B8DE900BD6A60 /* config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6273EF1C1F4B8DE900BD6A60 /* config.swift */; };
 		62EB7D641F464681006D9BC4 /* setup.m in Sources */ = {isa = PBXBuildFile; fileRef = 62EB7D631F464681006D9BC4 /* setup.m */; };
-		62EB7D681F464B46006D9BC4 /* handlers.m in Sources */ = {isa = PBXBuildFile; fileRef = 62EB7D661F464B45006D9BC4 /* handlers.m */; };
-		62EB7D6A1F4655D4006D9BC4 /* utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 62EB7D691F4655D4006D9BC4 /* utils.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -40,18 +35,15 @@
 		113D4CE71842AE330051122B /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
 		113F64D6183E93B20041DE1B /* HidSample */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = HidSample; path = TouchDriver; sourceTree = BUILT_PRODUCTS_DIR; };
 		113F64D9183E93B20041DE1B /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		113F64DC183E93B20041DE1B /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		113F64DF183E93B20041DE1B /* TouchDriver-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "TouchDriver-Prefix.pch"; sourceTree = "<group>"; };
 		621AE76A1F48AFE60009052A /* ThingStream.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ThingStream.swift; sourceTree = "<group>"; };
 		625A527F1F45E07600EF67A4 /* touchHandler.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = touchHandler.swift; sourceTree = "<group>"; tabWidth = 2; wrapsLines = 1; };
 		625E5A311F4B4ABE008CD4A1 /* simInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = simInput.swift; sourceTree = "<group>"; };
-		628671651F4798CD00E02DE2 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = SOURCE_ROOT; };
+		6273EF1A1F4B68E100BD6A60 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		6273EF1C1F4B8DE900BD6A60 /* config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = config.swift; sourceTree = "<group>"; };
 		628671661F4798D400E02DE2 /* TouchDriver-Bridging-Header.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "TouchDriver-Bridging-Header.h"; sourceTree = "<group>"; };
 		62EB7D631F464681006D9BC4 /* setup.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = setup.m; sourceTree = "<group>"; };
-		62EB7D651F464B45006D9BC4 /* handlers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = handlers.h; sourceTree = "<group>"; };
-		62EB7D661F464B45006D9BC4 /* handlers.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = handlers.m; sourceTree = "<group>"; tabWidth = 4; };
 		62EB7D671F464B45006D9BC4 /* setup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = setup.h; sourceTree = "<group>"; };
-		62EB7D691F4655D4006D9BC4 /* utils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = utils.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -59,10 +51,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				113D4CE4184000800051122B /* ApplicationServices.framework in Frameworks */,
-				113D4CE2183FFFC60051122B /* IOKit.framework in Frameworks */,
-				113D4CE0183FFFC30051122B /* CoreFoundation.framework in Frameworks */,
-				113F64DA183E93B20041DE1B /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -101,19 +89,16 @@
 		113F64DB183E93B20041DE1B /* TouchDriver */ = {
 			isa = PBXGroup;
 			children = (
-				62EB7D651F464B45006D9BC4 /* handlers.h */,
-				62EB7D661F464B45006D9BC4 /* handlers.m */,
 				62EB7D671F464B45006D9BC4 /* setup.h */,
 				62EB7D631F464681006D9BC4 /* setup.m */,
 				113D4CE61840E8600051122B /* utils.h */,
-				628671651F4798CD00E02DE2 /* config.h */,
-				62EB7D691F4655D4006D9BC4 /* utils.m */,
+				6273EF1A1F4B68E100BD6A60 /* main.swift */,
 				621AE76A1F48AFE60009052A /* ThingStream.swift */,
 				625E5A311F4B4ABE008CD4A1 /* simInput.swift */,
 				628671661F4798D400E02DE2 /* TouchDriver-Bridging-Header.h */,
-				113F64DC183E93B20041DE1B /* main.m */,
 				625A527F1F45E07600EF67A4 /* touchHandler.swift */,
 				113F64DE183E93B20041DE1B /* Supporting Files */,
+				6273EF1C1F4B8DE900BD6A60 /* config.swift */,
 			);
 			path = TouchDriver;
 			sourceTree = "<group>";
@@ -182,12 +167,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				62EB7D6A1F4655D4006D9BC4 /* utils.m in Sources */,
 				625E5A321F4B4ABE008CD4A1 /* simInput.swift in Sources */,
-				113F64DD183E93B20041DE1B /* main.m in Sources */,
+				6273EF1B1F4B68E100BD6A60 /* main.swift in Sources */,
 				621AE76B1F48AFE60009052A /* ThingStream.swift in Sources */,
+				6273EF1D1F4B8DE900BD6A60 /* config.swift in Sources */,
 				625A52801F45E07600EF67A4 /* touchHandler.swift in Sources */,
-				62EB7D681F464B46006D9BC4 /* handlers.m in Sources */,
 				62EB7D641F464681006D9BC4 /* setup.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

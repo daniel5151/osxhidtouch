@@ -5,11 +5,12 @@
 //  Created by Daniel Prilik on 2017-08-17.
 //
 
+// [Daniel Prilik]
+// This code is magical. I'm not going to touch it just yet.
+
 #include "setup.h"
 
-#include "handlers.h"
 #include "utils.h"
-#include "config.h"
 
 //---------------------------------------------------------------------------
 // Globals
@@ -17,7 +18,7 @@
 static IONotificationPortRef gNotifyPort = NULL;
 static io_iterator_t         gAddedIter  = 0;
 
-extern NSLock* gLock;
+void(*reportHidElementFn)(HIDElement *element);
 
 //---------------------------------------------------------------------------
 // Debug
@@ -96,8 +97,10 @@ break; \
 // and calls the routine that will alert us when a HID Device is plugged in.
 //---------------------------------------------------------------------------
 
-void InitHIDNotifications(SInt32 vendorID, SInt32 productID)
+void InitHIDNotifications(SInt32 vendorID, SInt32 productID, void(*reportHidElement)(HIDElement*))
 {
+    reportHidElementFn = reportHidElement;
+    
     CFMutableDictionaryRef     matchingDict;
     CFNumberRef                 refProdID;
     CFNumberRef                 refVendorID;
@@ -212,13 +215,7 @@ void HIDDeviceAdded(void* refCon, io_iterator_t iterator)
             /* Find the HID elements for this device and set up a receive queue. */
             pass = FindHIDElements(hidDataRef);
             pass = SetupQueue(hidDataRef);
-
-
-
-#if TOUCH_REPORT
-            printf("Please touch screen to continue.\n\n");
-#endif
-
+            
             /* Register an interest in finding out anything that happens with this device (disconnection, for example) */
             IOServiceAddInterestNotification(
                                              gNotifyPort,        // notifyPort
@@ -300,9 +297,8 @@ void DeviceNotification(void*         refCon,
 //---------------------------------------------------------------------------
 
 bool acceptHidElement(HIDElement *element) {
-#if TOUCH_REPORT
-    printHidElement("acceptHidElement", element);
-#endif
+//    // DEBUG
+//    printHidElement("acceptHidElement", element);
 
     switch (element->usagePage) {
         case kHIDPage_GenericDesktop:
@@ -370,8 +366,6 @@ bool FindHIDElements(HIDData* hidDataRef)
             continue;
 
         bzero(&newElement, sizeof(HIDElement));
-
-        newElement.owner = hidDataRef;
 
         /* Read the element's usage page (top level category describing the type of
          element---kHIDPage_GenericDesktop, for example) */
@@ -473,9 +467,8 @@ bool SetupQueue(HIDData* hidDataRef)
             !(tempHIDElement = (HIDElement*)CFDataGetMutableBytePtr(elements[i])))
             continue;
 
-#if TOUCH_REPORT
-        printHidElement("SetupQueue", tempHIDElement);
-#endif
+//        // DEBUG
+//        printHidElement("SetupQueue", tempHIDElement);
 
         if ((tempHIDElement->type < kIOHIDElementTypeInput_Misc) || (tempHIDElement->type > kIOHIDElementTypeInput_ScanCodes))
             continue;
@@ -578,7 +571,7 @@ void QueueCallbackFunction(
         change = (tempHIDElement->currentValue != event.value);
         tempHIDElement->currentValue = event.value;
 
-        reportHidElement(tempHIDElement);
+        reportHidElementFn(tempHIDElement);
     }
 
 }

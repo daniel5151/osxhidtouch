@@ -1,5 +1,5 @@
 //
-//  setup.h.h
+//  setup.h
 //  TouchDriver
 //
 //  Created by Daniel Prilik on 2017-08-17.
@@ -14,7 +14,21 @@
 
 #include "utils.h"
 
-void InitHIDNotifications(SInt32, SInt32);
+typedef struct HIDData {
+    io_object_t               notification;
+    IOHIDDeviceInterface122** hidDeviceInterface;
+    IOHIDQueueInterface**     hidQueueInterface;
+    CFDictionaryRef           hidElementDictionary;
+    CFRunLoopSourceRef        eventSource;
+    SInt32                    minx;
+    SInt32                    maxx;
+    SInt32                    miny;
+    SInt32                    maxy;
+    UInt8                     buffer[256];
+} HIDData;
+
+void InitHIDNotifications(SInt32, SInt32, void(*)(HIDElement*));
+
 void HIDDeviceAdded(void* refCon, io_iterator_t iterator);
 void DeviceNotification(
     void*        refCon,
