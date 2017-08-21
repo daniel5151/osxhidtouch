@@ -8,7 +8,6 @@
 #include "handlers.h"
 
 #include "config.h"
-#include "simInput.h"
 
 #include "TouchDriver-Swift.h"
 extern Swifty* swift;

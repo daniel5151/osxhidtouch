@@ -4,4 +4,3 @@
 
 #include "config.h"
 #include "utils.h"
-#include "simInput.h"

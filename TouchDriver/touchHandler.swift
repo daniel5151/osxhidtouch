@@ -51,7 +51,7 @@ extension InputType: CustomStringConvertible {
 }
 
 func doMouseActionAt(point: Touch, button: ButtonState) {
-  simulateClick(Int32(point.x), Int32(point.y), button)
+  simulateClick(x: point.x, y: point.y, button: button)
 }
 
 /*-----------------------------  Event struct  -------------------------------*/
@@ -230,13 +230,9 @@ class Swifty: NSObject {
     self.handleEvent(e: event)
   }
 
-  
-  
-  //////////////////////////////////////////////////////////////////////////////
   // [Daniel Prilik]
-  // My new implementation start from here
-  //////////////////////////////////////////////////////////////////////////////
-  
+  // MARK: New Implementation starts here
+
   // Track start point of every touch
   var start_xy = [Touch?](repeating: nil, count: NUM_TOUCHES)
 
@@ -244,6 +240,11 @@ class Swifty: NSObject {
   var open_context_menu = false
 
   func handleEvent(e: Event) {
+    defer {
+      // Always add the event we just processed to the event history!
+      self.events.push(val: e)
+    }
+
     // <debug>
     print(e)
     if e.button == BTN_UP { print() } // break up chunks of events
@@ -262,10 +263,10 @@ class Swifty: NSObject {
     let fingerEvents = self.events.filter({ $0.finger == finger })
 
     let curr_xy: Touch? = ({
-      guard let x = (fingerEvents.first{$0.type == INP_XCOORD})?.input else {
+      guard let x = (fingerEvents.first { $0.type == INP_XCOORD })?.input else {
         return nil
       }
-      guard let y = (fingerEvents.first{$0.type == INP_YCOORD})?.input else {
+      guard let y = (fingerEvents.first { $0.type == INP_YCOORD })?.input else {
         return nil
       }
 
@@ -293,15 +294,15 @@ class Swifty: NSObject {
           // Make sure that it was not just a tap
           if let start_xy = self.start_xy[finger] {
             let timePassed = Date().timeIntervalSince(start_xy.when)
-            if self.open_context_menu && timePassed > CONTEXT_MENU_DELAY  {
+            if self.open_context_menu && timePassed > CONTEXT_MENU_DELAY {
               doMouseActionAt(point: curr_xy, button: BTN_UP)
               doMouseActionAt(point: curr_xy, button: BTN_RIGHT)
             }
             self.open_context_menu = false
           }
-          
+
           // [DOUBLE CLICK]
-          if let last_up = (fingerEvents.first{$0.button == BTN_UP}) {
+          if let last_up = (fingerEvents.first { $0.button == BTN_UP }) {
             let last_up_dt = e.when.timeIntervalSince(last_up.when)
             if last_up_dt < DOUBLECLICK_DELAY {
               doMouseActionAt(point: curr_xy, button: BTN_2_CLICK)
@@ -314,7 +315,7 @@ class Swifty: NSObject {
       }
 
       if e.type == INP_XCOORD || e.type == INP_YCOORD {
-        
+
         // These gestures require a valid start point
         if let start_xy = self.start_xy[finger] {
           // [CONTEXT MENU]
@@ -323,7 +324,7 @@ class Swifty: NSObject {
           if curr_xy.distFrom(p: start_xy) > 10 {
             self.open_context_menu = false
           }
-          
+
           // [NOTIFICATION CENTER]
           if abs(start_xy.x - Int(SCREEN_RESX)) < 5 {
             let dx = abs(curr_xy.x - start_xy.x)
@@ -342,9 +343,6 @@ class Swifty: NSObject {
         doMouseActionAt(point: curr_xy, button: BTN_NO_CHANGE)
       }
     }
-
-    // Finally, add the event we just processed to the event history
-    self.events.push(val: e)
   }
 
 }
