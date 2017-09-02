@@ -5,27 +5,33 @@
 //  Created by Daniel Prilik on 2017-08-21.
 //
 
-import Foundation
+let applescripts: [String: NSAppleScript?] = [
+    "notification_center": NSAppleScript(source: """
+        tell application "System Events"
+            click menu bar item "Notification Center" of menu bar 1 of application process "SystemUIServer"
+        end tell
+    """)
+]
 
-func simulateClick(touch: Touch, button: ButtonState) {
+func simInput(touch: Touch, input: InputType) {
     let point = CGPoint(x: touch.x, y: touch.y)
 
-    switch button {
-    case ButtonState.DOWN:
+    switch input {
+    case .DOWN:
         let mouse_press = CGEvent(mouseEventSource: nil,
                                   mouseType: CGEventType.leftMouseDown,
                                   mouseCursorPosition: point,
                                   mouseButton: CGMouseButton.left)
 
         mouse_press?.post(tap: CGEventTapLocation.cghidEventTap)
-    case ButtonState.UP:
+    case .UP:
         let mouse_release = CGEvent(mouseEventSource: nil,
                                     mouseType: CGEventType.leftMouseUp,
                                     mouseCursorPosition: point,
                                     mouseButton: CGMouseButton.left)
 
         mouse_release?.post(tap: CGEventTapLocation.cghidEventTap)
-    case ButtonState.RIGHT:
+    case .RIGHT_CLICK:
         let mouse_right = CGEvent(mouseEventSource: nil,
                                   mouseType: CGEventType.rightMouseDown,
                                   mouseCursorPosition: point,
@@ -35,7 +41,7 @@ func simulateClick(touch: Touch, button: ButtonState) {
         mouse_right?.type = CGEventType.rightMouseUp
         mouse_right?.post(tap: CGEventTapLocation.cghidEventTap)
 
-    case ButtonState.DBL_CLICK:
+    case .DBL_CLICK:
         let mouse_double = CGEvent(mouseEventSource: nil,
                                    mouseType: CGEventType.leftMouseDown,
                                    mouseCursorPosition: point,
@@ -45,27 +51,15 @@ func simulateClick(touch: Touch, button: ButtonState) {
         mouse_double?.post(tap: CGEventTapLocation.cghidEventTap)
         mouse_double?.type = CGEventType.leftMouseUp
         mouse_double?.post(tap: CGEventTapLocation.cghidEventTap)
-    case ButtonState.NO_CHANGE:
+    case .NO_CHANGE:
         let move = CGEvent(mouseEventSource: nil,
                            mouseType: CGEventType.leftMouseDragged,
                            mouseCursorPosition: point,
                            mouseButton: CGMouseButton.left)
         move?.post(tap: CGEventTapLocation.cghidEventTap)
-    default:
-        break
+    case .NOTIFICATION_CENTER:
+        var error: NSDictionary?
+        applescripts["notification_center"]!?.executeAndReturnError(&error)
     }
-}
-
-let applescripts: [String: NSAppleScript?] = [
-    "notification_center": NSAppleScript(source: """
-        tell application "System Events"
-            click menu bar item "Notification Center" of menu bar 1 of application process "SystemUIServer"
-        end tell
-    """)
-]
-
-func openNotificationCenter() {
-    var error: NSDictionary?
-    applescripts["notification_center"]!?.executeAndReturnError(&error)
 }
 
